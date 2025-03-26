@@ -1,4 +1,11 @@
 import { Edit2, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Team = {
   id: string;
@@ -42,31 +49,37 @@ export function TeamMatchHistory({
     <div className="bg-white/90 backdrop-blur p-6 rounded-lg shadow-md">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Team Match History</h2>
-        <div className="flex gap-4 mt-4 md:mt-0 w-full md:w-auto">
-          <select
-            className="p-2 border rounded-md w-full md:w-auto relative z-50"
-            value={filterTeam1}
-            onChange={(e) => setFilterTeam1(e.target.value)}
-          >
-            <option value="">Filter Team 1</option>
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>
-                {team.emoji} {team.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className="p-2 border rounded-md w-full md:w-auto relative z-50"
-            value={filterTeam2}
-            onChange={(e) => setFilterTeam2(e.target.value)}
-          >
-            <option value="">Filter Team 2</option>
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>
-                {team.emoji} {team.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row gap-4 mt-4 md:mt-0 w-full md:w-auto">
+          <div className="relative">
+            <Select value={filterTeam1} onValueChange={setFilterTeam1}>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue placeholder="Filter Team 1" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {teams.map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.emoji} {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="relative">
+            <Select value={filterTeam2} onValueChange={setFilterTeam2}>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue placeholder="Filter Team 2" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {teams.map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.emoji} {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
       <div className="overflow-x-auto">

@@ -1,4 +1,11 @@
 import { Edit2, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Player = {
   id: string;
@@ -43,31 +50,37 @@ export function MatchHistory({
     <div className="bg-white/90 backdrop-blur p-6 rounded-lg shadow-md">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Match History</h2>
-        <div className="flex gap-4 mt-4 md:mt-0 w-full md:w-auto">
-          <select
-            className="p-2 border rounded-md w-full md:w-auto relative z-50"
-            value={filterPlayer1}
-            onChange={(e) => setFilterPlayer1(e.target.value)}
-          >
-            <option value="">Filter Player 1</option>
-            {players.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.emoji} {player.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className="p-2 border rounded-md w-full md:w-auto relative z-50"
-            value={filterPlayer2}
-            onChange={(e) => setFilterPlayer2(e.target.value)}
-          >
-            <option value="">Filter Player 2</option>
-            {players.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.emoji} {player.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col sm:flex-row gap-4 mt-4 md:mt-0 w-full md:w-auto">
+          <div className="relative">
+            <Select value={filterPlayer1} onValueChange={setFilterPlayer1}>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue placeholder="Filter Player 1" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Players</SelectItem>
+                {players.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.emoji} {player.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="relative">
+            <Select value={filterPlayer2} onValueChange={setFilterPlayer2}>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue placeholder="Filter Player 2" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Players</SelectItem>
+                {players.map((player) => (
+                  <SelectItem key={player.id} value={player.id}>
+                    {player.emoji} {player.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
       <div className="overflow-x-auto">

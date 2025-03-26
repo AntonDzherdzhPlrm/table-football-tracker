@@ -53,6 +53,27 @@
   body {
     @apply bg-white text-gray-900;
   }
+
+  /* Fix for select dropdowns on mobile */
+  select {
+    -webkit-appearance: menulist; /* For Safari/Chrome */
+    appearance: menulist;
+    position: relative;
+    z-index: 30;
+  }
+
+  /* Ensure dropdowns don't appear under other elements */
+  .relative select {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Fix for iOS devices */
+  @supports (-webkit-touch-callout: none) {
+    select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
 }
 
 .bg-football {

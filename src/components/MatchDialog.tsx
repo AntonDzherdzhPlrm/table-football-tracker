@@ -6,6 +6,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Player = {
   id: string;
@@ -49,15 +56,15 @@ export function MatchDialog({
   onSubmit,
   isEditing,
 }: MatchDialogProps) {
-  // Reference to the first select in the form for focus management
-  const player1SelectRef = useRef<HTMLSelectElement>(null);
+  // Reference to the first select trigger button in the form for focus management
+  const player1TriggerRef = useRef<HTMLButtonElement>(null);
 
   // Focus the first select when the dialog opens
   useEffect(() => {
-    if (isOpen && player1SelectRef.current) {
+    if (isOpen && player1TriggerRef.current) {
       // Short timeout to ensure the dialog is fully rendered
       const timeoutId = setTimeout(() => {
-        player1SelectRef.current?.focus();
+        player1TriggerRef.current?.focus();
       }, 50);
 
       return () => clearTimeout(timeoutId);
@@ -92,24 +99,28 @@ export function MatchDialog({
           </div>
           <div className="space-y-4">
             <div>
-              <select
-                ref={player1SelectRef}
-                className="w-full p-2 border rounded-md text-sm sm:text-base"
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Player 1
+              </label>
+              <Select
                 value={selectedPlayer1}
-                onChange={(e) => setSelectedPlayer1(e.target.value)}
-                required
+                onValueChange={setSelectedPlayer1}
               >
-                <option value="">Select Player 1</option>
-                {players.map((player) => (
-                  <option
-                    key={player.id}
-                    value={player.id}
-                    disabled={player.id === selectedPlayer2}
-                  >
-                    {player.emoji} {player.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger ref={player1TriggerRef} className="w-full">
+                  <SelectValue placeholder="Select Player 1" />
+                </SelectTrigger>
+                <SelectContent>
+                  {players.map((player) => (
+                    <SelectItem
+                      key={player.id}
+                      value={player.id}
+                      disabled={player.id === selectedPlayer2}
+                    >
+                      {player.emoji} {player.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <input
                 type="number"
                 placeholder="Score"
@@ -122,23 +133,28 @@ export function MatchDialog({
             </div>
 
             <div>
-              <select
-                className="w-full p-2 border rounded-md text-sm sm:text-base"
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Player 2
+              </label>
+              <Select
                 value={selectedPlayer2}
-                onChange={(e) => setSelectedPlayer2(e.target.value)}
-                required
+                onValueChange={setSelectedPlayer2}
               >
-                <option value="">Select Player 2</option>
-                {players.map((player) => (
-                  <option
-                    key={player.id}
-                    value={player.id}
-                    disabled={player.id === selectedPlayer1}
-                  >
-                    {player.emoji} {player.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Player 2" />
+                </SelectTrigger>
+                <SelectContent>
+                  {players.map((player) => (
+                    <SelectItem
+                      key={player.id}
+                      value={player.id}
+                      disabled={player.id === selectedPlayer1}
+                    >
+                      {player.emoji} {player.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <input
                 type="number"
                 placeholder="Score"

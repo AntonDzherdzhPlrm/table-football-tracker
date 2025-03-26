@@ -6,6 +6,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Player = {
   id: string;
@@ -172,40 +179,39 @@ export function TeamDialog({
             <label className="block text-sm font-medium text-gray-700">
               Select Players (2 required)
             </label>
-            <select
-              className="w-full p-2 border rounded-md"
-              value={selectedPlayer1}
-              onChange={(e) => setSelectedPlayer1(e.target.value)}
-              required
-            >
-              <option value="">Select Player 1</option>
-              {players.map((player) => (
-                <option
-                  key={player.id}
-                  value={player.id}
-                  disabled={player.id === selectedPlayer2}
-                >
-                  {player.emoji} {player.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="w-full p-2 border rounded-md"
-              value={selectedPlayer2}
-              onChange={(e) => setSelectedPlayer2(e.target.value)}
-              required
-            >
-              <option value="">Select Player 2</option>
-              {players.map((player) => (
-                <option
-                  key={player.id}
-                  value={player.id}
-                  disabled={player.id === selectedPlayer1}
-                >
-                  {player.emoji} {player.name}
-                </option>
-              ))}
-            </select>
+            <Select value={selectedPlayer1} onValueChange={setSelectedPlayer1}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Player 1" />
+              </SelectTrigger>
+              <SelectContent>
+                {players.map((player) => (
+                  <SelectItem
+                    key={player.id}
+                    value={player.id}
+                    disabled={player.id === selectedPlayer2}
+                  >
+                    {player.emoji} {player.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="h-2"></div>
+            <Select value={selectedPlayer2} onValueChange={setSelectedPlayer2}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Player 2" />
+              </SelectTrigger>
+              <SelectContent>
+                {players.map((player) => (
+                  <SelectItem
+                    key={player.id}
+                    value={player.id}
+                    disabled={player.id === selectedPlayer1}
+                  >
+                    {player.emoji} {player.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <button

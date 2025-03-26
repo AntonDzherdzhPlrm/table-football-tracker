@@ -6,6 +6,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Team = {
   id: string;
@@ -48,15 +55,15 @@ export function TeamMatchDialog({
   onSubmit,
   isEditing,
 }: TeamMatchDialogProps) {
-  // Reference to the first select in the form for focus management
-  const team1SelectRef = useRef<HTMLSelectElement>(null);
+  // Reference to the first select trigger button in the form for focus management
+  const team1TriggerRef = useRef<HTMLButtonElement>(null);
 
   // Focus the first select when the dialog opens
   useEffect(() => {
-    if (isOpen && team1SelectRef.current) {
+    if (isOpen && team1TriggerRef.current) {
       // Short timeout to ensure the dialog is fully rendered
       const timeoutId = setTimeout(() => {
-        team1SelectRef.current?.focus();
+        team1TriggerRef.current?.focus();
       }, 50);
 
       return () => clearTimeout(timeoutId);
@@ -91,24 +98,25 @@ export function TeamMatchDialog({
           </div>
           <div className="space-y-4">
             <div>
-              <select
-                ref={team1SelectRef}
-                className="w-full p-2 border rounded-md text-sm sm:text-base"
-                value={selectedTeam1}
-                onChange={(e) => setSelectedTeam1(e.target.value)}
-                required
-              >
-                <option value="">Select Team 1</option>
-                {teams.map((team) => (
-                  <option
-                    key={team.id}
-                    value={team.id}
-                    disabled={team.id === selectedTeam2}
-                  >
-                    {team.emoji} {team.name}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Team 1
+              </label>
+              <Select value={selectedTeam1} onValueChange={setSelectedTeam1}>
+                <SelectTrigger ref={team1TriggerRef} className="w-full">
+                  <SelectValue placeholder="Select Team 1" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teams.map((team) => (
+                    <SelectItem
+                      key={team.id}
+                      value={team.id}
+                      disabled={team.id === selectedTeam2}
+                    >
+                      {team.emoji} {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <input
                 type="number"
                 placeholder="Score"
@@ -121,23 +129,25 @@ export function TeamMatchDialog({
             </div>
 
             <div>
-              <select
-                className="w-full p-2 border rounded-md text-sm sm:text-base"
-                value={selectedTeam2}
-                onChange={(e) => setSelectedTeam2(e.target.value)}
-                required
-              >
-                <option value="">Select Team 2</option>
-                {teams.map((team) => (
-                  <option
-                    key={team.id}
-                    value={team.id}
-                    disabled={team.id === selectedTeam1}
-                  >
-                    {team.emoji} {team.name}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Team 2
+              </label>
+              <Select value={selectedTeam2} onValueChange={setSelectedTeam2}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Team 2" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teams.map((team) => (
+                    <SelectItem
+                      key={team.id}
+                      value={team.id}
+                      disabled={team.id === selectedTeam1}
+                    >
+                      {team.emoji} {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <input
                 type="number"
                 placeholder="Score"

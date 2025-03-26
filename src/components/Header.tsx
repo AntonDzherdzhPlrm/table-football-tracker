@@ -1,4 +1,4 @@
-import { Trophy, Menu, X, User, Users } from "lucide-react";
+import { Trophy, Menu, X, User, Users, BookOpen } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -12,6 +12,8 @@ export function Header() {
       ? "team"
       : location.pathname === "/individual"
       ? "individual"
+      : location.pathname === "/rules"
+      ? "rules"
       : "home";
 
   return (
@@ -44,6 +46,17 @@ export function Header() {
             >
               <Users className="h-4 w-4" />
               Team Matches
+            </Link>
+            <Link
+              to="/rules"
+              className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                activeTab === "rules"
+                  ? "bg-orange-600 text-white"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              <BookOpen className="h-4 w-4" />
+              Rules
             </Link>
           </div>
           <motion.button
@@ -122,6 +135,20 @@ export function Header() {
               >
                 <Users className="h-4 w-4" />
                 Team Matches
+              </Link>
+              <Link
+                to="/rules"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                }}
+                className={`w-full px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  activeTab === "rules"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                Rules
               </Link>
             </motion.div>
           </motion.div>

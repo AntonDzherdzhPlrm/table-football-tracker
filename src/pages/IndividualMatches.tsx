@@ -58,23 +58,76 @@ export function IndividualMatches() {
   const [error, setError] = useState<string | null>(null);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
-  const [filterPlayer1, setFilterPlayer1] = useState("");
-  const [filterPlayer2, setFilterPlayer2] = useState("");
+  const [filterPlayer1, setFilterPlayer1] = useState("all");
+  const [filterPlayer2, setFilterPlayer2] = useState("all");
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const initializeData = async () => {
+      if (!isMounted) return;
+
+      setIsLoading(true);
       try {
-        await Promise.all([fetchPlayers(), fetchMatches(), fetchPlayerStats()]);
+        const [playersResponse, statsResponse, matchesResponse] =
+          await Promise.all([
+            supabase.from("players").select("*"),
+            supabase.from("player_stats").select("*"),
+            supabase
+              .from("matches")
+              .select(
+                `
+              *,
+              player1:player1_id(id, name, nickname, emoji),
+              player2:player2_id(id, name, nickname, emoji)
+            `
+              )
+              .order("played_at", { ascending: false }),
+          ]);
+
+        if (!isMounted) return;
+
+        if (playersResponse.data) setPlayers(playersResponse.data);
+        if (statsResponse.data) setPlayerStats(statsResponse.data);
+        if (matchesResponse.data) setMatches(matchesResponse.data);
+
+        if (
+          playersResponse.error ||
+          statsResponse.error ||
+          matchesResponse.error
+        ) {
+          throw new Error("Failed to fetch data");
+        }
       } catch (err) {
-        setError(
-          'Please connect to Supabase using the "Connect to Supabase" button in the top right corner.'
-        );
+        if (isMounted) {
+          setError(
+            'Please connect to Supabase using the "Connect to Supabase" button in the top right corner.'
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  // Add a useEffect to handle filters
+  useEffect(() => {
+    // Skip initial fetch since we already load matches in the first useEffect
+    if (isLoading) return;
+
+    fetchMatches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterPlayer1, filterPlayer2, isLoading]);
 
   async function fetchPlayers() {
     const { data, error } = await supabase.from("players").select("*");
@@ -89,27 +142,31 @@ export function IndividualMatches() {
   }
 
   async function fetchMatches() {
-    let query = supabase
-      .from("matches")
-      .select(
+    try {
+      let query = supabase
+        .from("matches")
+        .select(
+          `
+          *,
+          player1:player1_id(id, name, nickname, emoji),
+          player2:player2_id(id, name, nickname, emoji)
         `
-        *,
-        player1:player1_id(id, name, nickname, emoji),
-        player2:player2_id(id, name, nickname, emoji)
-      `
-      )
-      .order("played_at", { ascending: false });
+        )
+        .order("played_at", { ascending: false });
 
-    if (filterPlayer1) {
-      query = query.eq("player1_id", filterPlayer1);
-    }
-    if (filterPlayer2) {
-      query = query.eq("player2_id", filterPlayer2);
-    }
+      if (filterPlayer1 && filterPlayer1 !== "all") {
+        query = query.eq("player1_id", filterPlayer1);
+      }
+      if (filterPlayer2 && filterPlayer2 !== "all") {
+        query = query.eq("player2_id", filterPlayer2);
+      }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    if (data) setMatches(data);
+      const { data, error } = await query;
+      if (error) throw error;
+      if (data) setMatches(data);
+    } catch (err) {
+      console.error("Error fetching matches:", err);
+    }
   }
 
   async function addPlayer(e: React.FormEvent) {
@@ -193,6 +250,8 @@ export function IndividualMatches() {
       setPlayer2Score("");
       setEditingMatch(null);
       setIsMatchDialogOpen(false);
+
+      // Refresh the necessary data after adding a match
       await Promise.all([fetchMatches(), fetchPlayerStats()]);
     } catch (err) {
       setError("Failed to record match. Please try again.");
@@ -246,10 +305,6 @@ export function IndividualMatches() {
     setNewPlayerEmoji(player.emoji);
     setIsPlayerDialogOpen(true);
   }
-
-  useEffect(() => {
-    fetchMatches();
-  }, [filterPlayer1, filterPlayer2]);
 
   if (error) {
     return (

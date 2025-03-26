@@ -63,13 +63,13 @@ export function TeamMatches() {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     return now.toISOString().slice(0, 16);
   });
-
-  const [error, setError] = useState<string | null>(null);
+  const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [editingMatch, setEditingMatch] = useState<TeamMatch | null>(null);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [filterTeam1, setFilterTeam1] = useState("");
-  const [filterTeam2, setFilterTeam2] = useState("");
-  const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
+  const [filterTeam1, setFilterTeam1] = useState("all");
+  const [filterTeam2, setFilterTeam2] = useState("all");
+
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -120,10 +120,10 @@ export function TeamMatches() {
       )
       .order("played_at", { ascending: false });
 
-    if (filterTeam1) {
+    if (filterTeam1 && filterTeam1 !== "all") {
       query = query.eq("team1_id", filterTeam1);
     }
-    if (filterTeam2) {
+    if (filterTeam2 && filterTeam2 !== "all") {
       query = query.eq("team2_id", filterTeam2);
     }
 
