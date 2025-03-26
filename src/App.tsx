@@ -9,15 +9,19 @@ import { TermsOfUse } from "./pages/TermsOfUse";
 import { DialogProvider } from "./lib/DialogContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { LocalizationProvider } from "./lib/LocalizationContext";
+import "./App.css";
 
 // Main App container with context
 function App() {
   return (
-    <BrowserRouter>
-      <DialogProvider>
-        <AppContent />
-      </DialogProvider>
-    </BrowserRouter>
+    <LocalizationProvider>
+      <BrowserRouter>
+        <DialogProvider>
+          <AppContent />
+        </DialogProvider>
+      </BrowserRouter>
+    </LocalizationProvider>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useLocalization } from "@/lib/LocalizationContext";
 import { TeamDialog } from "@/components/TeamDialog";
 import { TeamMatchDialog } from "@/components/TeamMatchDialog";
 import { TeamRankings } from "@/components/TeamRankings";
@@ -43,6 +44,7 @@ type TeamMatch = {
 };
 
 export function TeamMatches() {
+  const { t } = useLocalization();
   const { isTeamDialogOpen, setIsTeamDialogOpen } = useDialogContext();
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -81,14 +83,12 @@ export function TeamMatches() {
           fetchTeamStats(),
         ]);
       } catch (err) {
-        setError(
-          'Please connect to Supabase using the "Connect to Supabase" button in the top right corner.'
-        );
+        setError(t("common.error") + ": " + t("common.loading"));
       }
     };
 
     initializeData();
-  }, []);
+  }, [t]);
 
   async function fetchPlayers() {
     const { data, error } = await supabase.from("players").select("*");
@@ -168,7 +168,7 @@ export function TeamMatches() {
       setIsTeamDialogOpen(false);
       await Promise.all([fetchTeams(), fetchTeamStats()]);
     } catch (err) {
-      setError("Failed to create team. Please try again.");
+      setError(t("common.error") + ": " + t("team.add_team"));
     }
   }
 
@@ -220,7 +220,7 @@ export function TeamMatches() {
       setIsTeamDialogOpen(false);
       await Promise.all([fetchTeams(), fetchTeamStats(), fetchTeamMatches()]);
     } catch (err) {
-      setError("Failed to update team. Please try again.");
+      setError(t("common.error") + ": " + t("team.edit_team"));
     }
   }
 
@@ -258,7 +258,11 @@ export function TeamMatches() {
       setIsMatchDialogOpen(false);
       await Promise.all([fetchTeamMatches(), fetchTeamStats()]);
     } catch (err) {
-      setError("Failed to record match. Please try again.");
+      setError(
+        t("common.error") +
+          ": " +
+          (editingMatch ? t("team.edit_match") : t("team.add_match"))
+      );
     }
   }
 
@@ -272,7 +276,7 @@ export function TeamMatches() {
       if (error) throw error;
       await Promise.all([fetchTeamMatches(), fetchTeamStats()]);
     } catch (err) {
-      setError("Failed to delete match. Please try again.");
+      setError(t("common.error") + ": " + t("team.confirm_delete_match"));
     }
   }
 
@@ -296,7 +300,7 @@ export function TeamMatches() {
 
       await Promise.all([fetchTeams(), fetchTeamStats()]);
     } catch (err) {
-      setError("Failed to delete team. Please try again.");
+      setError(t("common.error") + ": " + t("team.confirm_delete_team"));
     }
   }
 
@@ -339,7 +343,7 @@ export function TeamMatches() {
       <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
           <h2 className="text-red-600 text-xl font-bold mb-4">
-            Connection Error
+            {t("common.error")}
           </h2>
           <p>{error}</p>
         </div>

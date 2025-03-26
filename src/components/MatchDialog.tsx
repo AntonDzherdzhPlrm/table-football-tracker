@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocalization } from "../lib/LocalizationContext";
 
 type Player = {
   id: string;
@@ -56,6 +57,7 @@ export function MatchDialog({
   onSubmit,
   isEditing,
 }: MatchDialogProps) {
+  const { t } = useLocalization();
   // Reference to the first select trigger button in the form for focus management
   const player1TriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -76,18 +78,18 @@ export function MatchDialog({
       <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Match" : "Add New Match"}
+            {isEditing ? t("individual.edit_match") : t("individual.add_match")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Edit match information below."
-              : "Record a new match by selecting players and entering scores."}
+              ? t("individual.dialog.edit_description")
+              : t("individual.dialog.add_description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Match Date
+              {t("individual.match_date")}
             </label>
             <input
               type="datetime-local"
@@ -100,14 +102,14 @@ export function MatchDialog({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Player 1
+                {t("individual.player1")}
               </label>
               <Select
                 value={selectedPlayer1}
                 onValueChange={setSelectedPlayer1}
               >
                 <SelectTrigger ref={player1TriggerRef} className="w-full">
-                  <SelectValue placeholder="Select Player 1" />
+                  <SelectValue placeholder={`${t("individual.player1")}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {players.map((player) => (
@@ -123,7 +125,7 @@ export function MatchDialog({
               </Select>
               <input
                 type="number"
-                placeholder="Score"
+                placeholder={t("individual.score")}
                 className="w-full mt-2 px-3 py-2 border rounded-md text-sm sm:text-base"
                 value={player1Score}
                 onChange={(e) => setPlayer1Score(e.target.value)}
@@ -134,14 +136,14 @@ export function MatchDialog({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Player 2
+                {t("individual.player2")}
               </label>
               <Select
                 value={selectedPlayer2}
                 onValueChange={setSelectedPlayer2}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Player 2" />
+                  <SelectValue placeholder={`${t("individual.player2")}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {players.map((player) => (
@@ -157,7 +159,7 @@ export function MatchDialog({
               </Select>
               <input
                 type="number"
-                placeholder="Score"
+                placeholder={t("individual.score")}
                 className="w-full mt-2 px-3 py-2 border rounded-md text-sm sm:text-base"
                 value={player2Score}
                 onChange={(e) => setPlayer2Score(e.target.value)}
@@ -170,7 +172,7 @@ export function MatchDialog({
             type="submit"
             className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500 text-sm sm:text-base"
           >
-            {isEditing ? "Update Match" : "Add Match"}
+            {isEditing ? t("common.update") : t("common.add")}
           </button>
         </form>
       </DialogContent>

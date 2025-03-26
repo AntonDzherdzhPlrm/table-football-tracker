@@ -2,10 +2,13 @@ import { Trophy, Menu, X, User, Users, BookOpen } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useLocalization } from "../lib/LocalizationContext";
+import LanguageSelector from "./LanguageSelector";
 
 export function Header() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useLocalization();
 
   const activeTab =
     location.pathname === "/team"
@@ -20,74 +23,86 @@ export function Header() {
     <header className="bg-gray-900/90 backdrop-blur-sm text-white shadow-lg relative z-[100]">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-4">
-            <Trophy className="h-8 w-8 text-orange-500" />
-            <h1 className="text-2xl font-bold">Table Football Tracker</h1>
-          </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <Link
-              to="/individual"
-              className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
-                activeTab === "individual"
-                  ? "bg-orange-600 text-white"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              <User className="h-4 w-4" />
-              Individual Matches
-            </Link>
-            <Link
-              to="/team"
-              className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
-                activeTab === "team"
-                  ? "bg-orange-600 text-white"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              Team Matches
-            </Link>
-            <Link
-              to="/rules"
-              className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
-                activeTab === "rules"
-                  ? "bg-orange-600 text-white"
-                  : "text-gray-300 hover:text-white"
-              }`}
-            >
-              <BookOpen className="h-4 w-4" />
-              Rules
-            </Link>
-          </div>
-          <motion.button
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            whileTap={{ scale: 0.95 }}
+          <Link
+            to="/"
+            className="flex items-center space-x-4 hover:text-orange-300 transition-colors"
+            aria-label={t("nav.home")}
           >
-            <AnimatePresence mode="wait">
-              {isMenuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <X className="h-6 w-6" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="menu"
-                  initial={{ rotate: 180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -180, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Menu className="h-6 w-6" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
+            <Trophy className="h-8 w-8 text-orange-500" />
+            <h1 className="text-2xl font-bold">{t("app.title")}</h1>
+          </Link>
+          <div className="flex items-center">
+            <div className="hidden md:flex items-center space-x-4 mr-4">
+              <Link
+                to="/individual"
+                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  activeTab === "individual"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <User className="h-4 w-4" />
+                {t("nav.individual")}
+              </Link>
+              <Link
+                to="/team"
+                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  activeTab === "team"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                {t("nav.team")}
+              </Link>
+              <Link
+                to="/rules"
+                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  activeTab === "rules"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                {t("nav.rules")}
+              </Link>
+            </div>
+
+            {/* Language Selector */}
+            <div className="hidden md:block">
+              <LanguageSelector />
+            </div>
+
+            <motion.button
+              className="md:hidden ml-4"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              whileTap={{ scale: 0.95 }}
+            >
+              <AnimatePresence mode="wait">
+                {isMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ rotate: -180, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 180, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <X className="h-6 w-6" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="menu"
+                    initial={{ rotate: 180, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -180, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Menu className="h-6 w-6" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -109,6 +124,20 @@ export function Header() {
               transition={{ duration: 0.2, delay: 0.1 }}
             >
               <Link
+                to="/"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                }}
+                className={`w-full px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  activeTab === "home"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <Trophy className="h-4 w-4" />
+                {t("nav.home")}
+              </Link>
+              <Link
                 to="/individual"
                 onClick={() => {
                   setIsMenuOpen(false);
@@ -120,7 +149,7 @@ export function Header() {
                 }`}
               >
                 <User className="h-4 w-4" />
-                Individual Matches
+                {t("nav.individual")}
               </Link>
               <Link
                 to="/team"
@@ -134,7 +163,7 @@ export function Header() {
                 }`}
               >
                 <Users className="h-4 w-4" />
-                Team Matches
+                {t("nav.team")}
               </Link>
               <Link
                 to="/rules"
@@ -148,8 +177,13 @@ export function Header() {
                 }`}
               >
                 <BookOpen className="h-4 w-4" />
-                Rules
+                {t("nav.rules")}
               </Link>
+
+              {/* Language Selector in mobile menu */}
+              <div className="pt-2">
+                <LanguageSelector />
+              </div>
             </motion.div>
           </motion.div>
         )}

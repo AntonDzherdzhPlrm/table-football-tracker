@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useLocalization } from "@/lib/LocalizationContext";
 
 import { MatchDialog } from "@/components/MatchDialog";
 import { PlayerDialog } from "@/components/PlayerDialog";
@@ -39,6 +40,7 @@ type Match = {
 };
 
 export function IndividualMatches() {
+  const { t } = useLocalization();
   const { isPlayerDialogOpen, setIsPlayerDialogOpen } = useDialogContext();
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
@@ -189,7 +191,7 @@ export function IndividualMatches() {
       setIsPlayerDialogOpen(false);
       await Promise.all([fetchPlayers(), fetchPlayerStats()]);
     } catch (err) {
-      setError("Failed to add player. Please try again.");
+      setError(t("common.error") + ": " + t("individual.add_player"));
     }
   }
 
@@ -215,7 +217,7 @@ export function IndividualMatches() {
       setIsPlayerDialogOpen(false);
       await Promise.all([fetchPlayers(), fetchPlayerStats(), fetchMatches()]);
     } catch (err) {
-      setError("Failed to update player. Please try again.");
+      setError(t("common.error") + ": " + t("individual.edit_player"));
     }
   }
 
@@ -254,7 +256,13 @@ export function IndividualMatches() {
       // Refresh the necessary data after adding a match
       await Promise.all([fetchMatches(), fetchPlayerStats()]);
     } catch (err) {
-      setError("Failed to record match. Please try again.");
+      setError(
+        t("common.error") +
+          ": " +
+          (editingMatch
+            ? t("individual.edit_match")
+            : t("individual.add_match"))
+      );
     }
   }
 
@@ -268,7 +276,7 @@ export function IndividualMatches() {
       if (error) throw error;
       await Promise.all([fetchMatches(), fetchPlayerStats()]);
     } catch (err) {
-      setError("Failed to delete match. Please try again.");
+      setError(t("common.error") + ": " + t("individual.confirm_delete_match"));
     }
   }
 
@@ -282,7 +290,9 @@ export function IndividualMatches() {
       if (error) throw error;
       await Promise.all([fetchPlayers(), fetchPlayerStats(), fetchMatches()]);
     } catch (err) {
-      setError("Failed to delete player. Please try again.");
+      setError(
+        t("common.error") + ": " + t("individual.confirm_delete_player")
+      );
     }
   }
 
@@ -311,7 +321,7 @@ export function IndividualMatches() {
       <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
           <h2 className="text-red-600 text-xl font-bold mb-4">
-            Connection Error
+            {t("common.error")}
           </h2>
           <p>{error}</p>
         </div>

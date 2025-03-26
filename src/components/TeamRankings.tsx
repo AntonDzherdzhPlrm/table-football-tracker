@@ -1,5 +1,6 @@
 import { Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useLocalization } from "../lib/LocalizationContext";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 type TeamStats = {
@@ -24,6 +25,7 @@ export function TeamRankings({
   onEditTeam,
   onDeleteTeam,
 }: TeamRankingsProps) {
+  const { t } = useLocalization();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<TeamStats | null>(null);
 
@@ -40,19 +42,31 @@ export function TeamRankings({
 
   return (
     <div className="bg-white/90 backdrop-blur p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Team Rankings</h2>
+      <h2 className="text-xl font-semibold mb-4">{t("team.rankings")}</h2>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b">
               <th className="text-left py-2 px-2 md:px-4">Pos</th>
-              <th className="text-left py-2 px-2 md:px-4">Team</th>
-              <th className="text-left py-2 px-2 md:px-4">M</th>
-              <th className="text-left py-2 px-2 md:px-4">W</th>
-              <th className="text-left py-2 px-2 md:px-4">D</th>
-              <th className="text-left py-2 px-2 md:px-4">L</th>
-              <th className="text-left py-2 px-2 md:px-4">Pts</th>
-              <th className="text-left py-2 px-2 md:px-4">Actions</th>
+              <th className="text-left py-2 px-2 md:px-4">
+                {t("team.team_name")}
+              </th>
+              <th className="text-left py-2 px-2 md:px-4">
+                {t("team.stats.matches").charAt(0)}
+              </th>
+              <th className="text-left py-2 px-2 md:px-4">
+                {t("team.stats.wins").charAt(0)}
+              </th>
+              <th className="text-left py-2 px-2 md:px-4">
+                {t("team.stats.draws").charAt(0)}
+              </th>
+              <th className="text-left py-2 px-2 md:px-4">
+                {t("team.stats.losses").charAt(0)}
+              </th>
+              <th className="text-left py-2 px-2 md:px-4">
+                {t("team.stats.points").charAt(0)}
+              </th>
+              <th className="text-left py-2 px-2 md:px-4"></th>
             </tr>
           </thead>
           <tbody>
@@ -79,6 +93,8 @@ export function TeamRankings({
                         })
                       }
                       className="p-1 text-blue-600 hover:text-blue-800"
+                      aria-label={t("common.edit")}
+                      title={t("common.edit")}
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
@@ -86,6 +102,8 @@ export function TeamRankings({
                       <button
                         onClick={() => handleDeleteClick(stats)}
                         className="p-1 text-red-600 hover:text-red-800"
+                        aria-label={t("common.delete")}
+                        title={t("common.delete")}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -101,8 +119,8 @@ export function TeamRankings({
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        title="Delete Team"
-        description={`Are you sure you want to delete the team "${teamToDelete?.name}"? This action cannot be undone.`}
+        title={t("common.confirmation")}
+        description={t("team.confirm_delete_team")}
         onConfirm={handleConfirmDelete}
       />
     </div>

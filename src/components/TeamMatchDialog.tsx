@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocalization } from "../lib/LocalizationContext";
 
 type Team = {
   id: string;
@@ -55,6 +56,7 @@ export function TeamMatchDialog({
   onSubmit,
   isEditing,
 }: TeamMatchDialogProps) {
+  const { t } = useLocalization();
   // Reference to the first select trigger button in the form for focus management
   const team1TriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -75,18 +77,18 @@ export function TeamMatchDialog({
       <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Team Match" : "Add New Team Match"}
+            {isEditing ? t("team.edit_match") : t("team.add_match")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Edit team match information below."
-              : "Record a new team match by selecting teams and entering scores."}
+              ? t("team.dialog.edit_description")
+              : t("team.dialog.add_description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Match Date
+              {t("team.match_date")}
             </label>
             <input
               type="datetime-local"
@@ -99,11 +101,11 @@ export function TeamMatchDialog({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Team 1
+                {t("team.team1")}
               </label>
               <Select value={selectedTeam1} onValueChange={setSelectedTeam1}>
                 <SelectTrigger ref={team1TriggerRef} className="w-full">
-                  <SelectValue placeholder="Select Team 1" />
+                  <SelectValue placeholder={t("team.team1")} />
                 </SelectTrigger>
                 <SelectContent>
                   {teams.map((team) => (
@@ -119,7 +121,7 @@ export function TeamMatchDialog({
               </Select>
               <input
                 type="number"
-                placeholder="Score"
+                placeholder={t("team.score")}
                 className="w-full mt-2 px-3 py-2 border rounded-md text-sm sm:text-base"
                 value={team1Score}
                 onChange={(e) => setTeam1Score(e.target.value)}
@@ -130,11 +132,11 @@ export function TeamMatchDialog({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Team 2
+                {t("team.team2")}
               </label>
               <Select value={selectedTeam2} onValueChange={setSelectedTeam2}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Team 2" />
+                  <SelectValue placeholder={t("team.team2")} />
                 </SelectTrigger>
                 <SelectContent>
                   {teams.map((team) => (
@@ -150,7 +152,7 @@ export function TeamMatchDialog({
               </Select>
               <input
                 type="number"
-                placeholder="Score"
+                placeholder={t("team.score")}
                 className="w-full mt-2 px-3 py-2 border rounded-md text-sm sm:text-base"
                 value={team2Score}
                 onChange={(e) => setTeam2Score(e.target.value)}
@@ -163,7 +165,7 @@ export function TeamMatchDialog({
             type="submit"
             className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500 text-sm sm:text-base"
           >
-            {isEditing ? "Update Match" : "Record Match"}
+            {isEditing ? t("common.update") : t("common.add")}
           </button>
         </form>
       </DialogContent>

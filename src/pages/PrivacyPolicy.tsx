@@ -1,105 +1,112 @@
+import { useLocalization } from "../lib/LocalizationContext";
+
 export function PrivacyPolicy() {
+  const { t } = useLocalization();
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white/90 backdrop-blur rounded-lg shadow-md my-8">
-      <h1 className="text-3xl font-bold mb-6 text-orange-600">
-        Privacy Policy
-      </h1>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="bg-gray-800/50 backdrop-blur-sm text-white rounded-lg shadow-lg p-6 mb-8">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          {t("privacy.title")}
+        </h1>
 
-      <section className="mb-8">
-        <p className="mb-4">
-          This Privacy Policy describes how Table Football Tracker ("we", "us",
-          or "our") collects, uses, and shares your personal information when
-          you use our website.
-        </p>
-      </section>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-orange-400">
+            Information We Collect
+          </h2>
+          <p className="mb-4">
+            We collect information you provide directly to us when you create an
+            account, including your name, email address, and optional profile
+            picture.
+          </p>
+          <p>
+            We also automatically collect certain information about your device
+            when you use our website, including your IP address, browser type,
+            operating system, and other usage details.
+          </p>
+        </section>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Information We Collect</h2>
-        <p className="mb-4">
-          When you use Table Football Tracker, we may collect the following
-          types of information:
-        </p>
-        <ul className="space-y-3 list-disc pl-5">
-          <li>
-            <strong>Personal Information:</strong> Names and nicknames of
-            players.
-          </li>
-          <li>
-            <strong>Usage Data:</strong> Match scores, game statistics, and
-            rankings.
-          </li>
-          <li>
-            <strong>Technical Data:</strong> IP address, browser type, device
-            information, and cookies.
-          </li>
-        </ul>
-      </section>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-orange-400">
+            How We Use Your Information
+          </h2>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>To provide and maintain our service</li>
+            <li>To notify you about changes to our service</li>
+            <li>
+              To allow you to participate in interactive features when you
+              choose to do so
+            </li>
+            <li>To provide customer support</li>
+            <li>
+              To gather analysis or valuable information so that we can improve
+              our service
+            </li>
+            <li>To monitor the usage of our service</li>
+            <li>To detect, prevent and address technical issues</li>
+          </ul>
+        </section>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">
-          How We Use Your Information
-        </h2>
-        <p className="mb-4">We use your information to:</p>
-        <ul className="space-y-3 list-disc pl-5">
-          <li>Provide, maintain, and improve Table Football Tracker.</li>
-          <li>Generate player statistics and rankings.</li>
-          <li>Track match history and results.</li>
-          <li>Analyze usage patterns to enhance user experience.</li>
-          <li>Communicate with you about updates or changes to our service.</li>
-        </ul>
-      </section>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-orange-400">
+            Data Retention
+          </h2>
+          <p>
+            We will retain your personal data only for as long as is necessary
+            for the purposes set out in this Privacy Policy. We will retain and
+            use your personal data to the extent necessary to comply with our
+            legal obligations, resolve disputes, and enforce our legal
+            agreements and policies.
+          </p>
+        </section>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">
-          Data Storage and Security
-        </h2>
-        <p className="mb-4">
-          All user data is stored in our Supabase database. We implement
-          appropriate security measures to protect your personal information
-          from unauthorized access, alteration, or disclosure.
-        </p>
-      </section>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-orange-400">
+            Security
+          </h2>
+          <p>
+            The security of your data is important to us, but remember that no
+            method of transmission over the Internet or method of electronic
+            storage is 100% secure. While we strive to use commercially
+            acceptable means to protect your personal data, we cannot guarantee
+            its absolute security.
+          </p>
+        </section>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">
-          Sharing Your Information
-        </h2>
-        <p className="mb-4">
-          We do not sell or rent your personal information to third parties. We
-          may share your information in the following circumstances:
-        </p>
-        <ul className="space-y-3 list-disc pl-5">
-          <li>With your consent.</li>
-          <li>To comply with legal obligations.</li>
-          <li>To protect our rights or the safety of users.</li>
-        </ul>
-      </section>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-orange-400">
+            Your Rights
+          </h2>
+          <p className="mb-4">You have the right to:</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Access the personal data we hold about you</li>
+            <li>
+              Request correction of any inaccurate personal data we hold about
+              you
+            </li>
+            <li>Request deletion of your personal data</li>
+            <li>Object to processing of your personal data</li>
+            <li>Request restriction of processing of your personal data</li>
+            <li>Request transfer of your personal data</li>
+            <li>
+              Withdraw consent at any time where we are relying on consent to
+              process your personal data
+            </li>
+          </ul>
+        </section>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Your Rights</h2>
-        <p className="mb-4">
-          Depending on your location, you may have the following rights
-          regarding your data:
-        </p>
-        <ul className="space-y-3 list-disc pl-5">
-          <li>Access to your personal information.</li>
-          <li>Correction of inaccurate data.</li>
-          <li>Deletion of your data.</li>
-          <li>Objection to processing of your data.</li>
-          <li>Data portability.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">
-          Changes to This Privacy Policy
-        </h2>
-        <p className="mb-4">
-          We may update this Privacy Policy from time to time. We will notify
-          you of any changes by posting the new Privacy Policy on this page and
-          updating the "Last updated" date.
-        </p>
-      </section>
+        <section>
+          <h2 className="text-2xl font-semibold mb-4 text-orange-400">
+            Changes to This Privacy Policy
+          </h2>
+          <p>
+            We may update our Privacy Policy from time to time. We will notify
+            you of any changes by posting the new Privacy Policy on this page
+            and updating the "Last Updated" date at the top of this Privacy
+            Policy.
+          </p>
+        </section>
+      </div>
     </div>
   );
 }

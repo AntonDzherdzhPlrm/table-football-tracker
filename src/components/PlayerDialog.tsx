@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useLocalization } from "../lib/LocalizationContext";
 
 type PlayerDialogProps = {
   isOpen: boolean;
@@ -86,6 +87,7 @@ export function PlayerDialog({
   onSubmit,
   isEditing,
 }: PlayerDialogProps) {
+  const { t } = useLocalization();
   // Reference to the first input in the form for focus management
   const nameInputRef = useRef<HTMLInputElement>(null);
   const initialFocusRef = useRef(false);
@@ -113,12 +115,14 @@ export function PlayerDialog({
       <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Player" : "Add New Player"}
+            {isEditing
+              ? t("individual.edit_player")
+              : t("individual.add_player")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Edit player information below."
-              : "Fill out the form to add a new player."}
+              ? t("individual.player_dialog.edit_description")
+              : t("individual.player_dialog.add_description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -127,7 +131,7 @@ export function PlayerDialog({
               htmlFor="player-name"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Player Name
+              {t("individual.player_name")}
             </label>
             <input
               id="player-name"
@@ -142,11 +146,11 @@ export function PlayerDialog({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nickname (optional)
+              {t("individual.player_nickname")}
             </label>
             <input
               type="text"
-              placeholder="Nickname"
+              placeholder={t("individual.player_nickname")}
               className="w-full px-3 py-2 border rounded-md"
               value={playerNickname}
               onChange={(e) => setPlayerNickname(e.target.value)}
@@ -155,7 +159,7 @@ export function PlayerDialog({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Emoji
+              {t("individual.player_emoji")}
             </label>
             <div className="grid grid-cols-8 gap-2">
               {commonEmojis.map((emoji) => (
@@ -179,7 +183,7 @@ export function PlayerDialog({
             type="submit"
             className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500"
           >
-            {isEditing ? "Update Player" : "Add Player"}
+            {isEditing ? t("common.update") : t("common.add")}
           </button>
         </form>
       </DialogContent>

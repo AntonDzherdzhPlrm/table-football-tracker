@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocalization } from "../lib/LocalizationContext";
 
 type Player = {
   id: string;
@@ -106,6 +107,7 @@ export function TeamDialog({
   onSubmit,
   isEditing,
 }: TeamDialogProps) {
+  const { t } = useLocalization();
   // Reference to the first input in the form for focus management
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,12 +128,12 @@ export function TeamDialog({
       <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Team" : "Create New Team"}
+            {isEditing ? t("team.edit_team") : t("team.add_team")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Edit team information below."
-              : "Create a new team by selecting two players and a team name."}
+              ? t("team.team_dialog.edit_description")
+              : t("team.team_dialog.add_description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -140,7 +142,7 @@ export function TeamDialog({
               htmlFor="team-name"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Team Name
+              {t("team.team_name")}
             </label>
             <input
               id="team-name"
@@ -155,7 +157,7 @@ export function TeamDialog({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Emoji
+              {t("team.team_emoji")}
             </label>
             <div className="grid grid-cols-8 gap-2">
               {commonEmojis.map((emoji) => (
@@ -177,11 +179,11 @@ export function TeamDialog({
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Select Players (2 required)
+              {t("team.select_players")}
             </label>
             <Select value={selectedPlayer1} onValueChange={setSelectedPlayer1}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Player 1" />
+                <SelectValue placeholder={t("team.player1")} />
               </SelectTrigger>
               <SelectContent>
                 {players.map((player) => (
@@ -198,7 +200,7 @@ export function TeamDialog({
             <div className="h-2"></div>
             <Select value={selectedPlayer2} onValueChange={setSelectedPlayer2}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Player 2" />
+                <SelectValue placeholder={t("team.player2")} />
               </SelectTrigger>
               <SelectContent>
                 {players.map((player) => (
@@ -218,7 +220,7 @@ export function TeamDialog({
             type="submit"
             className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500"
           >
-            {isEditing ? "Update Team" : "Create Team"}
+            {isEditing ? t("common.update") : t("common.add")}
           </button>
         </form>
       </DialogContent>
