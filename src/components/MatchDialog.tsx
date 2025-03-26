@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Trophy } from "lucide-react";
 
 type Player = {
   id: string;
