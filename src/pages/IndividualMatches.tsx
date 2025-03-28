@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { playersApi, matchesApi, statsApi } from "../lib/api";
 import { useLocalization } from "@/lib/LocalizationContext";
 
 import { MatchDialog } from "@/components/MatchDialog";
@@ -73,40 +73,20 @@ export function IndividualMatches() {
 
       setIsLoading(true);
       try {
-        const [playersResponse, statsResponse, matchesResponse] =
-          await Promise.all([
-            supabase.from("players").select("*"),
-            supabase.from("player_stats").select("*"),
-            supabase
-              .from("matches")
-              .select(
-                `
-              *,
-              player1:player1_id(id, name, nickname, emoji),
-              player2:player2_id(id, name, nickname, emoji)
-            `
-              )
-              .order("played_at", { ascending: false }),
-          ]);
+        const [players, playerStats, matches] = await Promise.all([
+          playersApi.getAll(),
+          statsApi.getPlayerStats(),
+          matchesApi.getAll(),
+        ]);
 
         if (!isMounted) return;
 
-        if (playersResponse.data) setPlayers(playersResponse.data);
-        if (statsResponse.data) setPlayerStats(statsResponse.data);
-        if (matchesResponse.data) setMatches(matchesResponse.data);
-
-        if (
-          playersResponse.error ||
-          statsResponse.error ||
-          matchesResponse.error
-        ) {
-          throw new Error("Failed to fetch data");
-        }
+        setPlayers(players);
+        setPlayerStats(playerStats);
+        setMatches(matches);
       } catch (err) {
         if (isMounted) {
-          setError(
-            'Please connect to Supabase using the "Connect to Supabase" button in the top right corner.'
-          );
+          setError("Failed to fetch data. Please check your connection.");
         }
       } finally {
         if (isMounted) {
@@ -132,40 +112,30 @@ export function IndividualMatches() {
   }, [filterPlayer1, filterPlayer2, isLoading]);
 
   async function fetchPlayers() {
-    const { data, error } = await supabase.from("players").select("*");
-    if (error) throw error;
-    if (data) setPlayers(data);
+    try {
+      const data = await playersApi.getAll();
+      setPlayers(data);
+    } catch (err) {
+      console.error("Error fetching players:", err);
+    }
   }
 
   async function fetchPlayerStats() {
-    const { data, error } = await supabase.from("player_stats").select("*");
-    if (error) throw error;
-    if (data) setPlayerStats(data);
+    try {
+      const data = await statsApi.getPlayerStats();
+      setPlayerStats(data);
+    } catch (err) {
+      console.error("Error fetching player stats:", err);
+    }
   }
 
   async function fetchMatches() {
     try {
-      let query = supabase
-        .from("matches")
-        .select(
-          `
-          *,
-          player1:player1_id(id, name, nickname, emoji),
-          player2:player2_id(id, name, nickname, emoji)
-        `
-        )
-        .order("played_at", { ascending: false });
-
-      if (filterPlayer1 && filterPlayer1 !== "all") {
-        query = query.eq("player1_id", filterPlayer1);
-      }
-      if (filterPlayer2 && filterPlayer2 !== "all") {
-        query = query.eq("player2_id", filterPlayer2);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      if (data) setMatches(data);
+      const data = await matchesApi.getAll({
+        player1_id: filterPlayer1,
+        player2_id: filterPlayer2,
+      });
+      setMatches(data);
     } catch (err) {
       console.error("Error fetching matches:", err);
     }
@@ -176,15 +146,12 @@ export function IndividualMatches() {
     if (!newPlayerName.trim()) return;
 
     try {
-      const { error } = await supabase.from("players").insert([
-        {
-          name: newPlayerName.trim(),
-          nickname: newPlayerNickname.trim() || null,
-          emoji: newPlayerEmoji || "👤",
-        },
-      ]);
+      await playersApi.create({
+        name: newPlayerName.trim(),
+        nickname: newPlayerNickname.trim() || undefined,
+        emoji: newPlayerEmoji || "👤",
+      });
 
-      if (error) throw error;
       setNewPlayerName("");
       setNewPlayerNickname("");
       setNewPlayerEmoji("👤");
@@ -200,16 +167,14 @@ export function IndividualMatches() {
     if (!editingPlayer || !newPlayerName.trim()) return;
 
     try {
-      const { error } = await supabase
-        .from("players")
-        .update({
-          name: newPlayerName.trim(),
-          nickname: newPlayerNickname.trim() || null,
-          emoji: newPlayerEmoji || "👤",
-        })
-        .eq("id", editingPlayer.id);
+      const updatedPlayer = {
+        name: newPlayerName.trim(),
+        nickname: newPlayerNickname.trim() || undefined,
+        emoji: newPlayerEmoji || "👤",
+      };
 
-      if (error) throw error;
+      await playersApi.update(editingPlayer.id, updatedPlayer);
+
       setNewPlayerName("");
       setNewPlayerNickname("");
       setNewPlayerEmoji("👤");
@@ -236,14 +201,9 @@ export function IndividualMatches() {
       };
 
       if (editingMatch) {
-        const { error } = await supabase
-          .from("matches")
-          .update(matchData)
-          .eq("id", editingMatch.id);
-        if (error) throw error;
+        await matchesApi.update(editingMatch.id, matchData);
       } else {
-        const { error } = await supabase.from("matches").insert([matchData]);
-        if (error) throw error;
+        await matchesApi.create(matchData);
       }
 
       setSelectedPlayer1("");
@@ -268,12 +228,7 @@ export function IndividualMatches() {
 
   async function deleteMatch(matchId: string) {
     try {
-      const { error } = await supabase
-        .from("matches")
-        .delete()
-        .eq("id", matchId);
-
-      if (error) throw error;
+      await matchesApi.delete(matchId);
       await Promise.all([fetchMatches(), fetchPlayerStats()]);
     } catch (err) {
       setError(t("common.error") + ": " + t("individual.confirm_delete_match"));
@@ -282,12 +237,7 @@ export function IndividualMatches() {
 
   async function deletePlayer(playerId: string) {
     try {
-      const { error } = await supabase
-        .from("players")
-        .delete()
-        .eq("id", playerId);
-
-      if (error) throw error;
+      await playersApi.delete(playerId);
       await Promise.all([fetchPlayers(), fetchPlayerStats(), fetchMatches()]);
     } catch (err) {
       setError(
