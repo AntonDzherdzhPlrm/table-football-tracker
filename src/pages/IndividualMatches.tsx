@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { useLocalization } from "@/lib/LocalizationContext";
 
 import { MatchDialog } from "@/components/MatchDialog";
@@ -75,37 +74,29 @@ export function IndividualMatches() {
       try {
         const [playersResponse, statsResponse, matchesResponse] =
           await Promise.all([
-            supabase.from("players").select("*"),
-            supabase.from("player_stats").select("*"),
-            supabase
-              .from("matches")
-              .select(
-                `
-              *,
-              player1:player1_id(id, name, nickname, emoji),
-              player2:player2_id(id, name, nickname, emoji)
-            `
-              )
-              .order("played_at", { ascending: false }),
+            fetch("/api/players").then((res) => {
+              if (!res.ok) throw new Error("Failed to fetch players");
+              return res.json();
+            }),
+            fetch("/api/player-stats").then((res) => {
+              if (!res.ok) throw new Error("Failed to fetch player stats");
+              return res.json();
+            }),
+            fetch("/api/matches").then((res) => {
+              if (!res.ok) throw new Error("Failed to fetch matches");
+              return res.json();
+            }),
           ]);
 
         if (!isMounted) return;
 
-        if (playersResponse.data) setPlayers(playersResponse.data);
-        if (statsResponse.data) setPlayerStats(statsResponse.data);
-        if (matchesResponse.data) setMatches(matchesResponse.data);
-
-        if (
-          playersResponse.error ||
-          statsResponse.error ||
-          matchesResponse.error
-        ) {
-          throw new Error("Failed to fetch data");
-        }
+        setPlayers(playersResponse);
+        setPlayerStats(statsResponse);
+        setMatches(matchesResponse);
       } catch (err) {
         if (isMounted) {
           setError(
-            'Please connect to Supabase using the "Connect to Supabase" button in the top right corner.'
+            "Failed to fetch data. Please ensure the server is running."
           );
         }
       } finally {
@@ -132,40 +123,47 @@ export function IndividualMatches() {
   }, [filterPlayer1, filterPlayer2, isLoading]);
 
   async function fetchPlayers() {
-    const { data, error } = await supabase.from("players").select("*");
-    if (error) throw error;
-    if (data) setPlayers(data);
+    try {
+      const response = await fetch("/api/players");
+      if (!response.ok) throw new Error("Failed to fetch players");
+      const data = await response.json();
+      setPlayers(data);
+    } catch (err) {
+      console.error("Error fetching players:", err);
+    }
   }
 
   async function fetchPlayerStats() {
-    const { data, error } = await supabase.from("player_stats").select("*");
-    if (error) throw error;
-    if (data) setPlayerStats(data);
+    try {
+      const response = await fetch("/api/player-stats");
+      if (!response.ok) throw new Error("Failed to fetch player stats");
+      const data = await response.json();
+      setPlayerStats(data);
+    } catch (err) {
+      console.error("Error fetching player stats:", err);
+    }
   }
 
   async function fetchMatches() {
     try {
-      let query = supabase
-        .from("matches")
-        .select(
-          `
-          *,
-          player1:player1_id(id, name, nickname, emoji),
-          player2:player2_id(id, name, nickname, emoji)
-        `
-        )
-        .order("played_at", { ascending: false });
+      let url = "/api/matches";
+      const params = new URLSearchParams();
 
       if (filterPlayer1 && filterPlayer1 !== "all") {
-        query = query.eq("player1_id", filterPlayer1);
+        params.append("player1", filterPlayer1);
       }
       if (filterPlayer2 && filterPlayer2 !== "all") {
-        query = query.eq("player2_id", filterPlayer2);
+        params.append("player2", filterPlayer2);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      if (data) setMatches(data);
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch matches");
+      const data = await response.json();
+      setMatches(data);
     } catch (err) {
       console.error("Error fetching matches:", err);
     }
@@ -176,15 +174,18 @@ export function IndividualMatches() {
     if (!newPlayerName.trim()) return;
 
     try {
-      const { error } = await supabase.from("players").insert([
-        {
+      const response = await fetch("/api/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           name: newPlayerName.trim(),
           nickname: newPlayerNickname.trim() || null,
           emoji: newPlayerEmoji || "👤",
-        },
-      ]);
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Failed to add player");
+
       setNewPlayerName("");
       setNewPlayerNickname("");
       setNewPlayerEmoji("👤");
@@ -200,16 +201,18 @@ export function IndividualMatches() {
     if (!editingPlayer || !newPlayerName.trim()) return;
 
     try {
-      const { error } = await supabase
-        .from("players")
-        .update({
+      const response = await fetch(`/api/players/${editingPlayer.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           name: newPlayerName.trim(),
           nickname: newPlayerNickname.trim() || null,
           emoji: newPlayerEmoji || "👤",
-        })
-        .eq("id", editingPlayer.id);
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Failed to update player");
+
       setNewPlayerName("");
       setNewPlayerNickname("");
       setNewPlayerEmoji("👤");
@@ -236,14 +239,21 @@ export function IndividualMatches() {
       };
 
       if (editingMatch) {
-        const { error } = await supabase
-          .from("matches")
-          .update(matchData)
-          .eq("id", editingMatch.id);
-        if (error) throw error;
+        const response = await fetch(`/api/matches/${editingMatch.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(matchData),
+        });
+
+        if (!response.ok) throw new Error("Failed to update match");
       } else {
-        const { error } = await supabase.from("matches").insert([matchData]);
-        if (error) throw error;
+        const response = await fetch("/api/matches", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(matchData),
+        });
+
+        if (!response.ok) throw new Error("Failed to add match");
       }
 
       setSelectedPlayer1("");
@@ -268,12 +278,12 @@ export function IndividualMatches() {
 
   async function deleteMatch(matchId: string) {
     try {
-      const { error } = await supabase
-        .from("matches")
-        .delete()
-        .eq("id", matchId);
+      const response = await fetch(`/api/matches/${matchId}`, {
+        method: "DELETE",
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Failed to delete match");
+
       await Promise.all([fetchMatches(), fetchPlayerStats()]);
     } catch (err) {
       setError(t("common.error") + ": " + t("individual.confirm_delete_match"));
@@ -282,12 +292,12 @@ export function IndividualMatches() {
 
   async function deletePlayer(playerId: string) {
     try {
-      const { error } = await supabase
-        .from("players")
-        .delete()
-        .eq("id", playerId);
+      const response = await fetch(`/api/players/${playerId}`, {
+        method: "DELETE",
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Failed to delete player");
+
       await Promise.all([fetchPlayers(), fetchPlayerStats(), fetchMatches()]);
     } catch (err) {
       setError(

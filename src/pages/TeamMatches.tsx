@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { useLocalization } from "@/lib/LocalizationContext";
 import { TeamDialog } from "@/components/TeamDialog";
 import { TeamMatchDialog } from "@/components/TeamMatchDialog";
@@ -72,9 +71,79 @@ export function TeamMatches() {
   const [filterTeam2, setFilterTeam2] = useState("all");
 
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Function definitions
+  async function fetchPlayers() {
+    try {
+      const response = await fetch("/api/players");
+      if (!response.ok) throw new Error("Failed to fetch players");
+      const data = await response.json();
+      setPlayers(data);
+      return data;
+    } catch (err) {
+      console.error("Error fetching players:", err);
+      throw err;
+    }
+  }
+
+  async function fetchTeams() {
+    try {
+      const response = await fetch("/api/teams");
+      if (!response.ok) throw new Error("Failed to fetch teams");
+      const data = await response.json();
+      setTeams(data);
+      return data;
+    } catch (err) {
+      console.error("Error fetching teams:", err);
+      throw err;
+    }
+  }
+
+  async function fetchTeamStats() {
+    try {
+      const response = await fetch("/api/team-stats");
+      if (!response.ok) throw new Error("Failed to fetch team stats");
+      const data = await response.json();
+      setTeamStats(data);
+      return data;
+    } catch (err) {
+      console.error("Error fetching team stats:", err);
+      throw err;
+    }
+  }
+
+  async function fetchTeamMatches() {
+    try {
+      let url = "/api/team-matches";
+      const params = new URLSearchParams();
+
+      if (filterTeam1 && filterTeam1 !== "all") {
+        params.append("team1", filterTeam1);
+      }
+      if (filterTeam2 && filterTeam2 !== "all") {
+        params.append("team2", filterTeam2);
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch team matches");
+      const data = await response.json();
+      setTeamMatches(data);
+      return data;
+    } catch (err) {
+      console.error("Error fetching team matches:", err);
+      throw err;
+    }
+  }
+
+  // Initial data loading
   useEffect(() => {
-    const initializeData = async () => {
+    async function loadInitialData() {
+      setIsLoading(true);
       try {
         await Promise.all([
           fetchPlayers(),
@@ -83,54 +152,23 @@ export function TeamMatches() {
           fetchTeamStats(),
         ]);
       } catch (err) {
-        setError(t("common.error") + ": " + t("common.loading"));
+        setError("Failed to fetch data. Please ensure the server is running.");
+      } finally {
+        setIsLoading(false);
       }
-    };
-
-    initializeData();
-  }, [t]);
-
-  async function fetchPlayers() {
-    const { data, error } = await supabase.from("players").select("*");
-    if (error) throw error;
-    if (data) setPlayers(data);
-  }
-
-  async function fetchTeams() {
-    const { data, error } = await supabase.from("teams").select("*");
-    if (error) throw error;
-    if (data) setTeams(data);
-  }
-
-  async function fetchTeamStats() {
-    const { data, error } = await supabase.from("team_stats").select("*");
-    if (error) throw error;
-    if (data) setTeamStats(data);
-  }
-
-  async function fetchTeamMatches() {
-    let query = supabase
-      .from("team_matches")
-      .select(
-        `
-        *,
-        team1:team1_id(id, name, emoji),
-        team2:team2_id(id, name, emoji)
-      `
-      )
-      .order("played_at", { ascending: false });
-
-    if (filterTeam1 && filterTeam1 !== "all") {
-      query = query.eq("team1_id", filterTeam1);
-    }
-    if (filterTeam2 && filterTeam2 !== "all") {
-      query = query.eq("team2_id", filterTeam2);
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    if (data) setTeamMatches(data);
-  }
+    loadInitialData();
+  }, []);
+
+  // Handle filters
+  useEffect(() => {
+    // Skip initial fetch since we already load matches in the first useEffect
+    if (isLoading) return;
+
+    fetchTeamMatches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterTeam1, filterTeam2, isLoading]);
 
   async function addTeam(e: React.FormEvent) {
     e.preventDefault();
@@ -138,28 +176,40 @@ export function TeamMatches() {
 
     try {
       // Insert team
-      const { data: teamData, error: teamError } = await supabase
-        .from("teams")
-        .insert([
-          {
-            name: teamName.trim(),
-            emoji: teamEmoji,
-          },
-        ])
-        .select()
-        .single();
+      const teamResponse = await fetch("/api/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: teamName.trim(),
+          emoji: teamEmoji,
+        }),
+      });
 
-      if (teamError) throw teamError;
+      if (!teamResponse.ok) throw new Error("Failed to add team");
+      const teamData = await teamResponse.json();
 
       // Insert team players
-      const { error: playersError } = await supabase
-        .from("team_players")
-        .insert([
-          { team_id: teamData.id, player_id: selectedPlayer1 },
-          { team_id: teamData.id, player_id: selectedPlayer2 },
-        ]);
+      const player1Response = await fetch("/api/team-players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          team_id: teamData[0].id,
+          player_id: selectedPlayer1,
+        }),
+      });
 
-      if (playersError) throw playersError;
+      const player2Response = await fetch("/api/team-players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          team_id: teamData[0].id,
+          player_id: selectedPlayer2,
+        }),
+      });
+
+      if (!player1Response.ok || !player2Response.ok) {
+        throw new Error("Failed to add team players");
+      }
 
       setTeamName("");
       setTeamEmoji("👥");
@@ -184,33 +234,55 @@ export function TeamMatches() {
 
     try {
       // Update team
-      const { error: teamError } = await supabase
-        .from("teams")
-        .update({
+      const teamResponse = await fetch(`/api/teams/${editingTeam.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           name: teamName.trim(),
           emoji: teamEmoji,
-        })
-        .eq("id", editingTeam.id);
+        }),
+      });
 
-      if (teamError) throw teamError;
+      if (!teamResponse.ok) throw new Error("Failed to update team");
+
+      // First get existing team players to delete them
+      const teamPlayersResponse = await fetch(
+        `/api/team-players?team_id=${editingTeam.id}`
+      );
+      if (!teamPlayersResponse.ok)
+        throw new Error("Failed to fetch team players");
+      const teamPlayers = await teamPlayersResponse.json();
 
       // Delete existing team players
-      const { error: deleteError } = await supabase
-        .from("team_players")
-        .delete()
-        .eq("team_id", editingTeam.id);
+      for (const player of teamPlayers) {
+        const deleteResponse = await fetch(`/api/team-players/${player.id}`, {
+          method: "DELETE",
+        });
+        if (!deleteResponse.ok) throw new Error("Failed to delete team player");
+      }
 
-      if (deleteError) throw deleteError;
+      // Add new team players
+      const player1Response = await fetch("/api/team-players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          team_id: editingTeam.id,
+          player_id: selectedPlayer1,
+        }),
+      });
 
-      // Insert new team players
-      const { error: playersError } = await supabase
-        .from("team_players")
-        .insert([
-          { team_id: editingTeam.id, player_id: selectedPlayer1 },
-          { team_id: editingTeam.id, player_id: selectedPlayer2 },
-        ]);
+      const player2Response = await fetch("/api/team-players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          team_id: editingTeam.id,
+          player_id: selectedPlayer2,
+        }),
+      });
 
-      if (playersError) throw playersError;
+      if (!player1Response.ok || !player2Response.ok) {
+        throw new Error("Failed to add team players");
+      }
 
       setTeamName("");
       setTeamEmoji("👥");
@@ -238,16 +310,21 @@ export function TeamMatches() {
       };
 
       if (editingMatch) {
-        const { error } = await supabase
-          .from("team_matches")
-          .update(matchData)
-          .eq("id", editingMatch.id);
-        if (error) throw error;
+        const response = await fetch(`/api/team-matches/${editingMatch.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(matchData),
+        });
+
+        if (!response.ok) throw new Error("Failed to update team match");
       } else {
-        const { error } = await supabase
-          .from("team_matches")
-          .insert([matchData]);
-        if (error) throw error;
+        const response = await fetch("/api/team-matches", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(matchData),
+        });
+
+        if (!response.ok) throw new Error("Failed to add team match");
       }
 
       setSelectedTeam1("");
@@ -256,6 +333,8 @@ export function TeamMatches() {
       setTeam2Score("");
       setEditingMatch(null);
       setIsMatchDialogOpen(false);
+
+      // Refresh the necessary data after adding a match
       await Promise.all([fetchTeamMatches(), fetchTeamStats()]);
     } catch (err) {
       setError(
@@ -268,12 +347,12 @@ export function TeamMatches() {
 
   async function deleteTeamMatch(matchId: string) {
     try {
-      const { error } = await supabase
-        .from("team_matches")
-        .delete()
-        .eq("id", matchId);
+      const response = await fetch(`/api/team-matches/${matchId}`, {
+        method: "DELETE",
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error("Failed to delete team match");
+
       await Promise.all([fetchTeamMatches(), fetchTeamStats()]);
     } catch (err) {
       setError(t("common.error") + ": " + t("team.confirm_delete_match"));
@@ -282,23 +361,30 @@ export function TeamMatches() {
 
   async function deleteTeam(teamId: string) {
     try {
-      // First delete team players
-      const { error: playersError } = await supabase
-        .from("team_players")
-        .delete()
-        .eq("team_id", teamId);
+      // First get team players to delete them
+      const teamPlayersResponse = await fetch(
+        `/api/team-players?team_id=${teamId}`
+      );
+      if (!teamPlayersResponse.ok)
+        throw new Error("Failed to fetch team players");
+      const teamPlayers = await teamPlayersResponse.json();
 
-      if (playersError) throw playersError;
+      // Delete team players
+      for (const player of teamPlayers) {
+        const deleteResponse = await fetch(`/api/team-players/${player.id}`, {
+          method: "DELETE",
+        });
+        if (!deleteResponse.ok) throw new Error("Failed to delete team player");
+      }
 
-      // Then delete the team
-      const { error: teamError } = await supabase
-        .from("teams")
-        .delete()
-        .eq("id", teamId);
+      // Delete team
+      const response = await fetch(`/api/teams/${teamId}`, {
+        method: "DELETE",
+      });
 
-      if (teamError) throw teamError;
+      if (!response.ok) throw new Error("Failed to delete team");
 
-      await Promise.all([fetchTeams(), fetchTeamStats()]);
+      await Promise.all([fetchTeams(), fetchTeamStats(), fetchTeamMatches()]);
     } catch (err) {
       setError(t("common.error") + ": " + t("team.confirm_delete_team"));
     }
@@ -319,24 +405,22 @@ export function TeamMatches() {
   function handleEditTeam(team: Team) {
     setEditingTeam(team);
     setTeamName(team.name);
-    setTeamEmoji(team.emoji);
-    // Fetch team players
-    supabase
-      .from("team_players")
-      .select("player_id")
-      .eq("team_id", team.id)
-      .then(({ data, error }) => {
-        if (!error && data) {
-          setSelectedPlayer1(data[0]?.player_id || "");
-          setSelectedPlayer2(data[1]?.player_id || "");
-        }
-      });
+    setTeamEmoji(team.emoji || "👥");
     setIsTeamDialogOpen(true);
-  }
 
-  useEffect(() => {
-    fetchTeamMatches();
-  }, [filterTeam1, filterTeam2]);
+    // Fetch the players for this team
+    fetch(`/api/team-players?team_id=${team.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.length >= 2) {
+          setSelectedPlayer1(data[0].player_id);
+          setSelectedPlayer2(data[1].player_id);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching team players:", err);
+      });
+  }
 
   if (error) {
     return (
@@ -398,9 +482,9 @@ export function TeamMatches() {
           <TeamDialog
             isOpen={isTeamDialogOpen}
             onOpenChange={setIsTeamDialogOpen}
-            players={players}
             teamName={teamName}
             teamEmoji={teamEmoji}
+            players={players}
             selectedPlayer1={selectedPlayer1}
             selectedPlayer2={selectedPlayer2}
             setTeamName={setTeamName}

@@ -15,6 +15,16 @@ export default defineConfig(({ mode }) => {
         components: path.resolve(__dirname, "./components"),
       },
     },
+    server: {
+      proxy: {
+        // Proxy all /api requests to our Express server
+        "/api": {
+          target: "http://localhost:3001",
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    },
     define: {
       // This ensures TypeScript knows about these env variables
       // Use env variables from loadEnv or fallback to process.env
