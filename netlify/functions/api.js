@@ -5,6 +5,7 @@ import cors from "cors";
 
 // Create Express app
 const app = express();
+const router = express.Router(); // Use an Express Router
 
 // Create Supabase client using server-side credentials
 const supabase = createClient(
@@ -12,13 +13,13 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+// Middleware for the router
+router.use(express.json());
+router.use(cors());
 
-// API Routes
+// API Routes (using the router, paths start from root)
 // Players
-app.get("/api/players", async (req, res) => {
+router.get("/players", async (req, res) => {
   try {
     const { data, error } = await supabase.from("players").select("*");
     if (error) throw error;
@@ -29,7 +30,7 @@ app.get("/api/players", async (req, res) => {
   }
 });
 
-app.post("/api/players", async (req, res) => {
+router.post("/players", async (req, res) => {
   try {
     const { data, error } = await supabase.from("players").insert([
       {
@@ -46,7 +47,7 @@ app.post("/api/players", async (req, res) => {
   }
 });
 
-app.put("/api/players/:id", async (req, res) => {
+router.put("/players/:id", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("players")
@@ -64,7 +65,7 @@ app.put("/api/players/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/players/:id", async (req, res) => {
+router.delete("/players/:id", async (req, res) => {
   try {
     const { error } = await supabase
       .from("players")
@@ -79,7 +80,7 @@ app.delete("/api/players/:id", async (req, res) => {
 });
 
 // Player Stats
-app.get("/api/player-stats", async (req, res) => {
+router.get("/player-stats", async (req, res) => {
   try {
     const { data, error } = await supabase.from("player_stats").select("*");
     if (error) throw error;
@@ -91,7 +92,7 @@ app.get("/api/player-stats", async (req, res) => {
 });
 
 // Matches
-app.get("/api/matches", async (req, res) => {
+router.get("/matches", async (req, res) => {
   try {
     let query = supabase
       .from("matches")
@@ -120,7 +121,7 @@ app.get("/api/matches", async (req, res) => {
   }
 });
 
-app.post("/api/matches", async (req, res) => {
+router.post("/matches", async (req, res) => {
   try {
     const matchData = {
       player1_id: req.body.player1_id,
@@ -139,7 +140,7 @@ app.post("/api/matches", async (req, res) => {
   }
 });
 
-app.put("/api/matches/:id", async (req, res) => {
+router.put("/matches/:id", async (req, res) => {
   try {
     const matchData = {
       player1_id: req.body.player1_id,
@@ -161,7 +162,7 @@ app.put("/api/matches/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/matches/:id", async (req, res) => {
+router.delete("/matches/:id", async (req, res) => {
   try {
     const { error } = await supabase
       .from("matches")
@@ -176,7 +177,7 @@ app.delete("/api/matches/:id", async (req, res) => {
 });
 
 // Teams
-app.get("/api/teams", async (req, res) => {
+router.get("/teams", async (req, res) => {
   try {
     const { data, error } = await supabase.from("teams").select("*");
     if (error) throw error;
@@ -187,7 +188,7 @@ app.get("/api/teams", async (req, res) => {
   }
 });
 
-app.post("/api/teams", async (req, res) => {
+router.post("/teams", async (req, res) => {
   try {
     const { data, error } = await supabase.from("teams").insert([
       {
@@ -203,7 +204,7 @@ app.post("/api/teams", async (req, res) => {
   }
 });
 
-app.put("/api/teams/:id", async (req, res) => {
+router.put("/teams/:id", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("teams")
@@ -220,7 +221,7 @@ app.put("/api/teams/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/teams/:id", async (req, res) => {
+router.delete("/teams/:id", async (req, res) => {
   try {
     const { error } = await supabase
       .from("teams")
@@ -235,7 +236,7 @@ app.delete("/api/teams/:id", async (req, res) => {
 });
 
 // Team Players
-app.get("/api/team-players", async (req, res) => {
+router.get("/team-players", async (req, res) => {
   try {
     let query = supabase.from("team_players").select(`
       *,
@@ -256,7 +257,7 @@ app.get("/api/team-players", async (req, res) => {
   }
 });
 
-app.post("/api/team-players", async (req, res) => {
+router.post("/team-players", async (req, res) => {
   try {
     const { data, error } = await supabase.from("team_players").insert([
       {
@@ -272,7 +273,7 @@ app.post("/api/team-players", async (req, res) => {
   }
 });
 
-app.delete("/api/team-players/:id", async (req, res) => {
+router.delete("/team-players/:id", async (req, res) => {
   try {
     const { error } = await supabase
       .from("team_players")
@@ -287,7 +288,7 @@ app.delete("/api/team-players/:id", async (req, res) => {
 });
 
 // Team Stats
-app.get("/api/team-stats", async (req, res) => {
+router.get("/team-stats", async (req, res) => {
   try {
     const { data, error } = await supabase.from("team_stats").select("*");
     if (error) throw error;
@@ -299,7 +300,7 @@ app.get("/api/team-stats", async (req, res) => {
 });
 
 // Team Matches
-app.get("/api/team-matches", async (req, res) => {
+router.get("/team-matches", async (req, res) => {
   try {
     let query = supabase
       .from("team_matches")
@@ -328,7 +329,7 @@ app.get("/api/team-matches", async (req, res) => {
   }
 });
 
-app.post("/api/team-matches", async (req, res) => {
+router.post("/team-matches", async (req, res) => {
   try {
     const matchData = {
       team1_id: req.body.team1_id,
@@ -349,7 +350,7 @@ app.post("/api/team-matches", async (req, res) => {
   }
 });
 
-app.put("/api/team-matches/:id", async (req, res) => {
+router.put("/team-matches/:id", async (req, res) => {
   try {
     const matchData = {
       team1_id: req.body.team1_id,
@@ -371,7 +372,7 @@ app.put("/api/team-matches/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/team-matches/:id", async (req, res) => {
+router.delete("/team-matches/:id", async (req, res) => {
   try {
     const { error } = await supabase
       .from("team_matches")
@@ -384,6 +385,9 @@ app.delete("/api/team-matches/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Mount the router under the /api path for serverless context
+app.use("/.netlify/functions/api", router);
 
 // Export handler for serverless function
 export const handler = serverless(app);
