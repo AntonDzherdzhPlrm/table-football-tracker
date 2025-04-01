@@ -386,8 +386,8 @@ router.delete("/team-matches/:id", async (req, res) => {
   }
 });
 
-// Mount the router under the /api path for serverless context
-app.use("/.netlify/functions/api", router);
+// Mount the router at the root path, as Netlify's redirect handles the /api prefix
+app.use("/", router); // Corrected mounting point
 
 // Export handler for serverless function
 export const handler = serverless(app);
