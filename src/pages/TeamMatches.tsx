@@ -7,6 +7,7 @@ import { TeamRankings } from "@/components/TeamRankings";
 import { TeamMatchHistory } from "@/components/TeamMatchHistory";
 import { TeamActionButtons } from "@/components/TeamActionButtons";
 import { useDialogContext } from "@/lib/DialogContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type Player = {
   id: string;
@@ -46,11 +47,19 @@ type TeamMatch = {
 export function TeamMatches() {
   const { t } = useLocalization();
   const { isTeamDialogOpen, setIsTeamDialogOpen } = useDialogContext();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Initialize filter states from URL query parameters
+  const queryParams = new URLSearchParams(location.search);
+
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [teamMatches, setTeamMatches] = useState<TeamMatch[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState(
+    queryParams.get("month") || "all"
+  );
   const [availableMonths, setAvailableMonths] = useState<
     Array<{ value: string; label: string }>
   >([{ value: "all", label: t("common.all") }]);
@@ -72,11 +81,45 @@ export function TeamMatches() {
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [editingMatch, setEditingMatch] = useState<TeamMatch | null>(null);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [filterTeam1, setFilterTeam1] = useState("all");
-  const [filterTeam2, setFilterTeam2] = useState("all");
+  const [filterTeam1, setFilterTeam1] = useState(
+    queryParams.get("team1") || "all"
+  );
+  const [filterTeam2, setFilterTeam2] = useState(
+    queryParams.get("team2") || "all"
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Function to update URL when filters change
+  const updateUrlParams = (team1: string, team2: string, month: string) => {
+    const params = new URLSearchParams();
+
+    if (team1 !== "all") params.set("team1", team1);
+    if (team2 !== "all") params.set("team2", team2);
+    if (month !== "all") params.set("month", month);
+
+    const newSearch = params.toString();
+    const newPath = `${location.pathname}${newSearch ? `?${newSearch}` : ""}`;
+
+    navigate(newPath, { replace: true });
+  };
+
+  // Custom setters that update both state and URL
+  const handleSetFilterTeam1 = (value: string) => {
+    setFilterTeam1(value);
+    updateUrlParams(value, filterTeam2, selectedMonth);
+  };
+
+  const handleSetFilterTeam2 = (value: string) => {
+    setFilterTeam2(value);
+    updateUrlParams(filterTeam1, value, selectedMonth);
+  };
+
+  const handleSetSelectedMonth = (value: string) => {
+    setSelectedMonth(value);
+    updateUrlParams(filterTeam1, filterTeam2, value);
+  };
 
   useEffect(() => {
     const initializeData = async () => {
@@ -103,6 +146,27 @@ export function TeamMatches() {
     if (isLoading) return;
     fetchTeamMatches();
   }, [filterTeam1, filterTeam2, isLoading]);
+
+  // Listen for URL changes and update filters accordingly
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const team1Param = params.get("team1") || "all";
+    const team2Param = params.get("team2") || "all";
+    const monthParam = params.get("month") || "all";
+
+    // Only update state if values are different to avoid infinite loops
+    if (team1Param !== filterTeam1) {
+      setFilterTeam1(team1Param);
+    }
+
+    if (team2Param !== filterTeam2) {
+      setFilterTeam2(team2Param);
+    }
+
+    if (monthParam !== selectedMonth) {
+      setSelectedMonth(monthParam);
+    }
+  }, [location.search]);
 
   async function fetchPlayers() {
     const { data, error } = await supabase.from("players").select("*");
@@ -560,7 +624,7 @@ export function TeamMatches() {
             teamStats={teamStats}
             onDeleteTeam={deleteTeam}
             selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
+            setSelectedMonth={handleSetSelectedMonth}
             availableMonths={availableMonths}
           />
 
@@ -581,12 +645,12 @@ export function TeamMatches() {
             teams={teams}
             filterTeam1={filterTeam1}
             filterTeam2={filterTeam2}
-            setFilterTeam1={setFilterTeam1}
-            setFilterTeam2={setFilterTeam2}
+            setFilterTeam1={handleSetFilterTeam1}
+            setFilterTeam2={handleSetFilterTeam2}
             onEditMatch={handleEditTeamMatch}
             onDeleteMatch={deleteTeamMatch}
             selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
+            setSelectedMonth={handleSetSelectedMonth}
             availableMonths={availableMonths}
           />
         </div>

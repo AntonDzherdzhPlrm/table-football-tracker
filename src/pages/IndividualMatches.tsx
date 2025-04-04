@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useLocalization } from "@/lib/LocalizationContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { MatchDialog } from "@/components/MatchDialog";
 import { PlayerDialog } from "@/components/PlayerDialog";
@@ -63,11 +64,52 @@ export function IndividualMatches() {
   const [error, setError] = useState<string | null>(null);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
-  const [filterPlayer1, setFilterPlayer1] = useState("all");
-  const [filterPlayer2, setFilterPlayer2] = useState("all");
-  const [selectedMonth, setSelectedMonth] = useState("all");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Initialize filter states from URL query parameters
+  const queryParams = new URLSearchParams(location.search);
+  const [filterPlayer1, setFilterPlayer1] = useState(
+    queryParams.get("player1") || "all"
+  );
+  const [filterPlayer2, setFilterPlayer2] = useState(
+    queryParams.get("player2") || "all"
+  );
+  const [selectedMonth, setSelectedMonth] = useState(
+    queryParams.get("month") || "all"
+  );
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Function to update URL when filters change
+  const updateUrlParams = (player1: string, player2: string, month: string) => {
+    const params = new URLSearchParams();
+
+    if (player1 !== "all") params.set("player1", player1);
+    if (player2 !== "all") params.set("player2", player2);
+    if (month !== "all") params.set("month", month);
+
+    const newSearch = params.toString();
+    const newPath = `${location.pathname}${newSearch ? `?${newSearch}` : ""}`;
+
+    navigate(newPath, { replace: true });
+  };
+
+  // Custom setters that update both state and URL
+  const handleSetFilterPlayer1 = (value: string) => {
+    setFilterPlayer1(value);
+    updateUrlParams(value, filterPlayer2, selectedMonth);
+  };
+
+  const handleSetFilterPlayer2 = (value: string) => {
+    setFilterPlayer2(value);
+    updateUrlParams(filterPlayer1, value, selectedMonth);
+  };
+
+  const handleSetSelectedMonth = (value: string) => {
+    setSelectedMonth(value);
+    updateUrlParams(filterPlayer1, filterPlayer2, value);
+  };
 
   // Initial fetch of players
   useEffect(() => {
@@ -102,6 +144,27 @@ export function IndividualMatches() {
     if (isLoading) return;
     fetchMatches();
   }, [filterPlayer1, filterPlayer2, isLoading]);
+
+  // Listen for URL changes and update filters accordingly
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const player1Param = params.get("player1") || "all";
+    const player2Param = params.get("player2") || "all";
+    const monthParam = params.get("month") || "all";
+
+    // Only update state if values are different to avoid infinite loops
+    if (player1Param !== filterPlayer1) {
+      setFilterPlayer1(player1Param);
+    }
+
+    if (player2Param !== filterPlayer2) {
+      setFilterPlayer2(player2Param);
+    }
+
+    if (monthParam !== selectedMonth) {
+      setSelectedMonth(monthParam);
+    }
+  }, [location.search]);
 
   async function fetchPlayers() {
     const { data, error } = await supabase.from("players").select("*");
@@ -511,7 +574,7 @@ export function IndividualMatches() {
           <PlayerRankings
             playerStats={playerStats}
             selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
+            setSelectedMonth={handleSetSelectedMonth}
             availableMonths={availableMonths}
           />
 
@@ -532,12 +595,12 @@ export function IndividualMatches() {
             players={players}
             filterPlayer1={filterPlayer1}
             filterPlayer2={filterPlayer2}
-            setFilterPlayer1={setFilterPlayer1}
-            setFilterPlayer2={setFilterPlayer2}
+            setFilterPlayer1={handleSetFilterPlayer1}
+            setFilterPlayer2={handleSetFilterPlayer2}
             onEditMatch={handleEditMatch}
             onDeleteMatch={deleteMatch}
             selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
+            setSelectedMonth={handleSetSelectedMonth}
             availableMonths={availableMonths}
           />
         </div>
