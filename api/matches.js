@@ -1,6 +1,14 @@
-import { supabase } from "./_lib/supabase.js";
+import { createClient } from "@supabase/supabase-js";
 
-export default async function handler(req, res) {
+// Initialize Supabase client with environment variables
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+// Create the Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Vercel serverless function
+export default async (req, res) => {
   // Set CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -10,6 +18,8 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
+
+  console.log("API route /api/matches called with method:", req.method);
 
   try {
     // GET matches with filtering
@@ -73,4 +83,4 @@ export default async function handler(req, res) {
     console.error("Matches API error:", error.message);
     return res.status(500).json({ error: error.message });
   }
-}
+};

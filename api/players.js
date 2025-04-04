@@ -1,7 +1,14 @@
-import { supabase } from "./_lib/supabase.js";
+import { createClient } from "@supabase/supabase-js";
 
-// This is what Vercel expects for API routes
-export default async function handler(req, res) {
+// Initialize Supabase client with environment variables
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+// Create the Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Vercel serverless function
+export default async (req, res) => {
   // Set CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -44,4 +51,4 @@ export default async function handler(req, res) {
     console.error("Players API error:", error.message);
     return res.status(500).json({ error: error.message });
   }
-}
+};
