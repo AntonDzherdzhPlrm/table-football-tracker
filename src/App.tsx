@@ -63,7 +63,11 @@ function AppContent() {
   return (
     <div
       className={`min-h-screen flex flex-col ${getBackgroundClass()}`}
-      style={location.pathname === "/management" ? backgroundStyle : {}}
+      style={{
+        ...(location.pathname === "/management" ? backgroundStyle : {}),
+        position: "relative",
+        overflow: "hidden",
+      }}
     >
       {showHeader && <Header />}
 

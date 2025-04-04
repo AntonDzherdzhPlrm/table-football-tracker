@@ -73,7 +73,13 @@ export function TeamMatchHistory({
               >
                 <SelectValue placeholder={t("common.filter_by_month")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="z-50"
+                align="start"
+                avoidCollisions={true}
+              >
                 {availableMonths.map((month) => (
                   <SelectItem key={month.value} value={month.value}>
                     {month.label}
@@ -93,7 +99,13 @@ export function TeamMatchHistory({
               <SelectTrigger id="team1-filter" className="w-full text-sm">
                 <SelectValue placeholder={t("team.filter_team1")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="z-50"
+                align="start"
+                avoidCollisions={true}
+              >
                 <SelectItem value="all">{t("common.all")}</SelectItem>
                 {teams.map((team) => (
                   <SelectItem key={team.id} value={team.id}>
@@ -114,7 +126,13 @@ export function TeamMatchHistory({
               <SelectTrigger id="team2-filter" className="w-full text-sm">
                 <SelectValue placeholder={t("team.filter_team2")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="z-50"
+                align="start"
+                avoidCollisions={true}
+              >
                 <SelectItem value="all">{t("common.all")}</SelectItem>
                 {teams.map((team) => (
                   <SelectItem key={team.id} value={team.id}>

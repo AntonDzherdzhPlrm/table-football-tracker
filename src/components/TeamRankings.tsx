@@ -71,7 +71,13 @@ export function TeamRankings({
                 >
                   <SelectValue placeholder={t("common.filter_by_month")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent
+                  position="popper"
+                  sideOffset={4}
+                  className="z-50"
+                  align="start"
+                  avoidCollisions={true}
+                >
                   {availableMonths.map((month) => (
                     <SelectItem key={month.value} value={month.value}>
                       {month.label}

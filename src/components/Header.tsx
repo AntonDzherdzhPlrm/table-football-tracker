@@ -28,13 +28,12 @@ export function Header() {
           <Link
             to="/"
             className="flex items-center space-x-4 hover:text-orange-300 transition-colors"
-            aria-label={t("nav.home")}
+            aria-label={t("app.title")}
           >
             <Trophy className="h-8 w-8 text-orange-500" />
-            <h1 className="text-2xl font-bold">{t("app.title")}</h1>
           </Link>
-          <div className="flex items-center">
-            <div className="hidden md:flex items-center space-x-4 mr-4">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="hidden md:flex items-center space-x-4">
               <Link
                 to="/individual"
                 className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
@@ -80,7 +79,9 @@ export function Header() {
                 {t("nav.rules")}
               </Link>
             </div>
+          </div>
 
+          <div className="flex items-center">
             {/* Language Selector */}
             <div className="hidden md:block">
               <LanguageSelector />

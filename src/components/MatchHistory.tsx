@@ -71,7 +71,13 @@ export function MatchHistory({
               <SelectTrigger id="match-month-filter" className="w-full text-sm">
                 <SelectValue placeholder={t("common.filter_by_month")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="z-50"
+                align="start"
+                avoidCollisions={true}
+              >
                 {availableMonths.map((month) => (
                   <SelectItem key={month.value} value={month.value}>
                     {month.label}
@@ -91,7 +97,13 @@ export function MatchHistory({
               <SelectTrigger id="player1-filter" className="w-full text-sm">
                 <SelectValue placeholder={t("individual.filter_player1")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="z-50"
+                align="start"
+                avoidCollisions={true}
+              >
                 <SelectItem value="all">{t("common.all")}</SelectItem>
                 {players.map((player) => (
                   <SelectItem key={player.id} value={player.id}>
@@ -112,7 +124,13 @@ export function MatchHistory({
               <SelectTrigger id="player2-filter" className="w-full text-sm">
                 <SelectValue placeholder={t("individual.filter_player2")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="z-50"
+                align="start"
+                avoidCollisions={true}
+              >
                 <SelectItem value="all">{t("common.all")}</SelectItem>
                 {players.map((player) => (
                   <SelectItem key={player.id} value={player.id}>
