@@ -1,4 +1,4 @@
-import { Trophy, Menu, X, User, Users, BookOpen } from "lucide-react";
+import { Trophy, Menu, X, User, Users, BookOpen, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -17,6 +17,8 @@ export function Header() {
       ? "individual"
       : location.pathname === "/rules"
       ? "rules"
+      : location.pathname === "/management"
+      ? "management"
       : "home";
 
   return (
@@ -54,6 +56,17 @@ export function Header() {
               >
                 <Users className="h-4 w-4" />
                 {t("nav.team")}
+              </Link>
+              <Link
+                to="/management"
+                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  activeTab === "management"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+                {t("nav.management")}
               </Link>
               <Link
                 to="/rules"
@@ -164,6 +177,20 @@ export function Header() {
               >
                 <Users className="h-4 w-4" />
                 {t("nav.team")}
+              </Link>
+              <Link
+                to="/management"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                }}
+                className={`w-full px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  activeTab === "management"
+                    ? "bg-orange-600 text-white"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+                {t("nav.management")}
               </Link>
               <Link
                 to="/rules"

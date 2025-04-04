@@ -4,6 +4,7 @@
   "nav.individual": "Mecze indywidualne",
   "nav.team": "Mecze drużynowe",
   "nav.rules": "Zasady",
+  "nav.management": "Zarządzanie",
   "footer.rights": "© 2025 Tracker piłkarzyków. Stworzone przez Anton Dzherdzh. Wszelkie prawa zastrzeżone.",
   "footer.privacy": "Polityka prywatności",
   "footer.terms": "Warunki korzystania",
@@ -79,6 +80,7 @@
 
   "individual.title": "Mecze indywidualne",
   "individual.rankings": "Ranking graczy",
+  "individual.player_management": "Zarządzanie graczami",
   "individual.matches": "Historia meczów",
   "individual.add_player": "Dodaj gracza",
   "individual.edit_player": "Edytuj gracza",
@@ -141,5 +143,13 @@
   "home.individual.description": "Śledź mecze 1 na 1 między graczami i przeglądaj indywidualne rankingi.",
   "home.team.description": "Zapisuj mecze drużynowe 2 na 2 i śledź ranking drużyn.",
   "home.rules.description": "Poznaj oficjalne zasady i etykietę piłkarzyków.",
-  "home.footer": "Śledź swoje gry, poprawiaj umiejętności i zostań mistrzem!"
+  "home.footer": "Śledź swoje gry, poprawiaj umiejętności i zostań mistrzem!",
+
+  "management.title": "Zarządzanie graczami i drużynami",
+  "management.players": "Gracze",
+  "management.teams": "Drużyny",
+  "management.add_player": "Dodaj gracza",
+  "management.add_team": "Dodaj drużynę",
+  "management.edit_player": "Edytuj gracza",
+  "management.edit_team": "Edytuj drużynę"
 }

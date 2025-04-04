@@ -125,12 +125,12 @@ export function TeamDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto border-t-4 border-orange-500">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-xl text-gray-800">
             {isEditing ? t("team.edit_team") : t("team.add_team")}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600">
             {isEditing
               ? t("team.team_dialog.edit_description")
               : t("team.team_dialog.add_description")}
@@ -218,7 +218,7 @@ export function TeamDialog({
 
           <button
             type="submit"
-            className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500"
+            className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500 transition-colors"
           >
             {isEditing ? t("common.update") : t("common.add")}
           </button>

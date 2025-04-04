@@ -74,12 +74,12 @@ export function TeamMatchDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto border-t-4 border-orange-500">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-xl text-gray-800">
             {isEditing ? t("team.edit_match") : t("team.add_match")}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600">
             {isEditing
               ? t("team.dialog.edit_description")
               : t("team.dialog.add_description")}
@@ -92,7 +92,7 @@ export function TeamMatchDialog({
             </label>
             <input
               type="datetime-local"
-              className="w-full px-3 py-2 border rounded-md text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
               value={matchDate}
               onChange={(e) => setMatchDate(e.target.value)}
               required
@@ -122,7 +122,7 @@ export function TeamMatchDialog({
               <input
                 type="number"
                 placeholder={t("team.score")}
-                className="w-full mt-2 px-3 py-2 border rounded-md text-sm sm:text-base"
+                className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                 value={team1Score}
                 onChange={(e) => setTeam1Score(e.target.value)}
                 required
@@ -153,7 +153,7 @@ export function TeamMatchDialog({
               <input
                 type="number"
                 placeholder={t("team.score")}
-                className="w-full mt-2 px-3 py-2 border rounded-md text-sm sm:text-base"
+                className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm sm:text-base"
                 value={team2Score}
                 onChange={(e) => setTeam2Score(e.target.value)}
                 required
@@ -163,7 +163,7 @@ export function TeamMatchDialog({
           </div>
           <button
             type="submit"
-            className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500 text-sm sm:text-base"
+            className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500 transition-colors text-sm sm:text-base"
           >
             {isEditing ? t("common.update") : t("common.add")}
           </button>

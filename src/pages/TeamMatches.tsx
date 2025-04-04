@@ -316,32 +316,14 @@ export function TeamMatches() {
     setIsMatchDialogOpen(true);
   }
 
-  function handleEditTeam(team: Team) {
-    setEditingTeam(team);
-    setTeamName(team.name);
-    setTeamEmoji(team.emoji);
-    // Fetch team players
-    supabase
-      .from("team_players")
-      .select("player_id")
-      .eq("team_id", team.id)
-      .then(({ data, error }) => {
-        if (!error && data) {
-          setSelectedPlayer1(data[0]?.player_id || "");
-          setSelectedPlayer2(data[1]?.player_id || "");
-        }
-      });
-    setIsTeamDialogOpen(true);
-  }
-
   useEffect(() => {
     fetchTeamMatches();
   }, [filterTeam1, filterTeam2]);
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+      <div className="min-h-screen bg-team-football p-8 flex items-center justify-center">
+        <div className="bg-white/95 backdrop-blur p-8 rounded-lg shadow-md w-full max-w-md border-t-4 border-red-500">
           <h2 className="text-red-600 text-xl font-bold mb-4">
             {t("common.error")}
           </h2>
@@ -411,11 +393,7 @@ export function TeamMatches() {
             isEditing={!!editingTeam}
           />
 
-          <TeamRankings
-            teamStats={teamStats}
-            onEditTeam={handleEditTeam}
-            onDeleteTeam={deleteTeam}
-          />
+          <TeamRankings teamStats={teamStats} onDeleteTeam={deleteTeam} />
 
           <TeamMatchHistory
             matches={teamMatches}

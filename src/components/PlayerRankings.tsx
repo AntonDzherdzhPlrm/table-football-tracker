@@ -1,7 +1,4 @@
-import { Edit2, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { useLocalization } from "../lib/LocalizationContext";
-import { ConfirmDialog } from "./ConfirmDialog";
 
 type PlayerStats = {
   id: string;
@@ -17,36 +14,10 @@ type PlayerStats = {
 
 type PlayerRankingsProps = {
   playerStats: PlayerStats[];
-  onEditPlayer: (player: {
-    id: string;
-    name: string;
-    nickname?: string;
-    emoji: string;
-  }) => void;
-  onDeletePlayer: (playerId: string) => void;
 };
 
-export function PlayerRankings({
-  playerStats,
-  onEditPlayer,
-  onDeletePlayer,
-}: PlayerRankingsProps) {
+export function PlayerRankings({ playerStats }: PlayerRankingsProps) {
   const { t } = useLocalization();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [playerToDelete, setPlayerToDelete] = useState<PlayerStats | null>(
-    null
-  );
-
-  const handleDeleteClick = (player: PlayerStats) => {
-    setPlayerToDelete(player);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (playerToDelete) {
-      onDeletePlayer(playerToDelete.id);
-    }
-  };
 
   return (
     <div className="bg-white/90 backdrop-blur p-6 rounded-lg shadow-md">
@@ -77,7 +48,6 @@ export function PlayerRankings({
               <th className="text-left py-2 px-2 md:px-4">
                 {t("individual.stats.points").charAt(0)}
               </th>
-              <th className="text-left py-2 px-2 md:px-4"></th>
             </tr>
           </thead>
           <tbody>
@@ -96,48 +66,11 @@ export function PlayerRankings({
                 <td className="py-2 px-2 md:px-4">{stats.draws}</td>
                 <td className="py-2 px-2 md:px-4">{stats.losses}</td>
                 <td className="py-2 px-2 md:px-4">{stats.points}</td>
-                <td className="py-2 px-2 md:px-4">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() =>
-                        onEditPlayer({
-                          id: stats.id,
-                          name: stats.name,
-                          nickname: stats.nickname,
-                          emoji: stats.emoji,
-                        })
-                      }
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      aria-label={t("common.edit")}
-                      title={t("common.edit")}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    {stats.matches_played === 0 && (
-                      <button
-                        onClick={() => handleDeleteClick(stats)}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        aria-label={t("common.delete")}
-                        title={t("common.delete")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      <ConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        title={t("common.confirmation")}
-        description={t("individual.confirm_delete_player")}
-        onConfirm={handleConfirmDelete}
-      />
     </div>
   );
 }

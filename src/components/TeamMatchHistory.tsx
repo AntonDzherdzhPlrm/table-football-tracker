@@ -49,7 +49,7 @@ export function TeamMatchHistory({
   const { t, language } = useLocalization();
 
   return (
-    <div className="bg-white/90 backdrop-blur p-6 rounded-lg shadow-md">
+    <div className="bg-white/95 backdrop-blur p-6 rounded-lg shadow-md border-t-4 border-orange-500">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">{t("team.matches")}</h2>
         <div className="flex flex-col sm:flex-row gap-4 mt-4 md:mt-0 w-full md:w-auto">
@@ -88,20 +88,29 @@ export function TeamMatchHistory({
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b">
-              <th className="text-left py-2 px-2 md:px-4">
+            <tr className="border-b border-gray-200">
+              <th className="text-left py-3 px-3 md:px-4 font-semibold text-gray-600">
                 {t("team.match_date")}
               </th>
-              <th className="text-left py-2 px-2 md:px-4">{t("team.team1")}</th>
-              <th className="text-left py-2 px-2 md:px-4">{t("team.score")}</th>
-              <th className="text-left py-2 px-2 md:px-4">{t("team.team2")}</th>
-              <th className="text-left py-2 px-2 md:px-4"></th>
+              <th className="text-left py-3 px-3 md:px-4 font-semibold text-gray-600">
+                {t("team.team1")}
+              </th>
+              <th className="text-left py-3 px-3 md:px-4 font-semibold text-gray-600">
+                {t("team.score")}
+              </th>
+              <th className="text-left py-3 px-3 md:px-4 font-semibold text-gray-600">
+                {t("team.team2")}
+              </th>
+              <th className="text-left py-3 px-3 md:px-4 font-semibold text-gray-600"></th>
             </tr>
           </thead>
           <tbody>
             {matches.map((match) => (
-              <tr key={match.id} className="border-b">
-                <td className="py-2 px-2 md:px-4">
+              <tr
+                key={match.id}
+                className="border-b border-gray-100 hover:bg-gray-50"
+              >
+                <td className="py-3 px-3 md:px-4">
                   {new Date(match.played_at).toLocaleString(
                     language === "en"
                       ? "en-GB"
@@ -118,22 +127,22 @@ export function TeamMatchHistory({
                     }
                   )}
                 </td>
-                <td className="py-2 px-2 md:px-4">
+                <td className="py-3 px-3 md:px-4">
                   <span className="mr-2">{match.team1?.emoji}</span>
                   {match.team1?.name}
                 </td>
-                <td className="py-2 px-2 md:px-4">
+                <td className="py-3 px-3 md:px-4 font-semibold">
                   {match.team1_score} - {match.team2_score}
                 </td>
-                <td className="py-2 px-2 md:px-4">
+                <td className="py-3 px-3 md:px-4">
                   <span className="mr-2">{match.team2?.emoji}</span>
                   {match.team2?.name}
                 </td>
-                <td className="py-2 px-2 md:px-4">
-                  <div className="flex gap-2">
+                <td className="py-3 px-3 md:px-4">
+                  <div className="flex gap-2 justify-end">
                     <button
                       onClick={() => onEditMatch(match)}
-                      className="p-1 text-blue-600 hover:text-blue-800"
+                      className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100"
                       aria-label={t("common.edit")}
                       title={t("common.edit")}
                     >
@@ -141,7 +150,7 @@ export function TeamMatchHistory({
                     </button>
                     <button
                       onClick={() => onDeleteMatch(match.id)}
-                      className="p-1 text-red-600 hover:text-red-800"
+                      className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100"
                       aria-label={t("common.delete")}
                       title={t("common.delete")}
                     >

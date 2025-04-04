@@ -4,6 +4,7 @@
   "nav.individual": "Індивідуальні матчі",
   "nav.team": "Командні матчі",
   "nav.rules": "Правила",
+  "nav.management": "Управління",
   "footer.rights": "© 2025 Трекер настільного футболу. Створено Джердж Антоном. Всі права захищені.",
   "footer.privacy": "Політика конфіденційності",
   "footer.terms": "Умови використання",
@@ -79,6 +80,7 @@
 
   "individual.title": "Індивідуальні матчі",
   "individual.rankings": "Рейтинг гравців",
+  "individual.player_management": "Управління гравцями",
   "individual.matches": "Історія матчів",
   "individual.add_player": "Додати гравця",
   "individual.edit_player": "Редагувати гравця",
@@ -141,5 +143,13 @@
   "home.individual.description": "Відстежуйте матчі 1 на 1 між гравцями та переглядайте індивідуальні рейтинги.",
   "home.team.description": "Записуйте командні матчі 2 на 2 та стежте за рейтингом команд.",
   "home.rules.description": "Дізнайтеся про офіційні правила та етикет настільного футболу.",
-  "home.footer": "Відстежуйте свої ігри, вдосконалюйте навички та станьте чемпіоном!"
+  "home.footer": "Відстежуйте свої ігри, вдосконалюйте навички та станьте чемпіоном!",
+
+  "management.title": "Управління гравцями та командами",
+  "management.players": "Гравці",
+  "management.teams": "Команди",
+  "management.add_player": "Додати гравця",
+  "management.add_team": "Додати команду",
+  "management.edit_player": "Редагувати гравця",
+  "management.edit_team": "Редагувати команду"
 }

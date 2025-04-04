@@ -4,6 +4,7 @@
   "nav.individual": "Individual Matches",
   "nav.team": "Team Matches",
   "nav.rules": "Rules",
+  "nav.management": "Management",
   "footer.rights": "© 2025 Football Table Tracker. Created by Anton Dzherdzh. All rights reserved.",
   "footer.privacy": "Privacy Policy",
   "footer.terms": "Terms of Use",
@@ -79,6 +80,7 @@
 
   "individual.title": "Individual Matches",
   "individual.rankings": "Player Rankings",
+  "individual.player_management": "Player Management",
   "individual.matches": "Match History",
   "individual.add_player": "Add Player",
   "individual.edit_player": "Edit Player",
@@ -141,5 +143,13 @@
   "home.individual.description": "Track 1-on-1 matches between players and view individual rankings.",
   "home.team.description": "Record 2-on-2 team matches and track team standings.",
   "home.rules.description": "Learn the official rules and etiquette for table football.",
-  "home.footer": "Track your games, improve your skills, and become the champion!"
+  "home.footer": "Track your games, improve your skills, and become the champion!",
+
+  "management.title": "Player & Team Management",
+  "management.players": "Players",
+  "management.teams": "Teams",
+  "management.add_player": "Add Player",
+  "management.add_team": "Add Team",
+  "management.edit_player": "Edit Player",
+  "management.edit_team": "Edit Team"
 }

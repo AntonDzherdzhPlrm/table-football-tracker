@@ -385,11 +385,7 @@ export function IndividualMatches() {
             isEditing={!!editingPlayer}
           />
 
-          <PlayerRankings
-            playerStats={playerStats}
-            onEditPlayer={handleEditPlayer}
-            onDeletePlayer={deletePlayer}
-          />
+          <PlayerRankings playerStats={playerStats} />
 
           <MatchHistory
             matches={matches}
