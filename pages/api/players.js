@@ -1,6 +1,5 @@
 import { supabase } from "./_lib/supabase.js";
 
-// This is what Vercel expects for API routes
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
