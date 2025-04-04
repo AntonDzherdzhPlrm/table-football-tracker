@@ -45,6 +45,9 @@ export function IndividualMatches() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<
+    Array<{ value: string; label: string }>
+  >([{ value: "all", label: t("common.all") }]);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerNickname, setNewPlayerNickname] = useState("");
   const [newPlayerEmoji, setNewPlayerEmoji] = useState("👤");
@@ -62,73 +65,42 @@ export function IndividualMatches() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [filterPlayer1, setFilterPlayer1] = useState("all");
   const [filterPlayer2, setFilterPlayer2] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initial fetch of players
   useEffect(() => {
-    let isMounted = true;
-
     const initializeData = async () => {
-      if (!isMounted) return;
-
       setIsLoading(true);
-      try {
-        const [playersResponse, statsResponse, matchesResponse] =
-          await Promise.all([
-            supabase.from("players").select("*"),
-            supabase.from("player_stats").select("*"),
-            supabase
-              .from("matches")
-              .select(
-                `
-              *,
-              player1:player1_id(id, name, nickname, emoji),
-              player2:player2_id(id, name, nickname, emoji)
-            `
-              )
-              .order("played_at", { ascending: false }),
-          ]);
-
-        if (!isMounted) return;
-
-        if (playersResponse.data) setPlayers(playersResponse.data);
-        if (statsResponse.data) setPlayerStats(statsResponse.data);
-        if (matchesResponse.data) setMatches(matchesResponse.data);
-
-        if (
-          playersResponse.error ||
-          statsResponse.error ||
-          matchesResponse.error
-        ) {
-          throw new Error("Failed to fetch data");
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(
-            'Please connect to Supabase using the "Connect to Supabase" button in the top right corner.'
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+      await fetchPlayers();
+      setIsLoading(false);
     };
 
     initializeData();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
-  // Add a useEffect to handle filters
+  // Initial data fetch
   useEffect(() => {
-    // Skip initial fetch since we already load matches in the first useEffect
     if (isLoading) return;
 
     fetchMatches();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // Initial fetch of player stats happens after matches are loaded
+    // because we need available months from matches first
+  }, [isLoading]);
+
+  // Fetch player stats when selected month changes
+  useEffect(() => {
+    if (isLoading) return;
+    fetchPlayerStats();
+    // No need to call fetchMatches here, as we filter matches client-side
+  }, [selectedMonth, isLoading]);
+
+  // Fetch matches when player filters change
+  useEffect(() => {
+    if (isLoading) return;
+    fetchMatches();
   }, [filterPlayer1, filterPlayer2, isLoading]);
 
   async function fetchPlayers() {
@@ -138,9 +110,140 @@ export function IndividualMatches() {
   }
 
   async function fetchPlayerStats() {
-    const { data, error } = await supabase.from("player_stats").select("*");
-    if (error) throw error;
-    if (data) setPlayerStats(data);
+    try {
+      if (selectedMonth === "all") {
+        // When "all" is selected, fetch from the player_stats view that has all-time stats
+        const { data, error } = await supabase
+          .from("player_stats")
+          .select("*")
+          .order("points", { ascending: false })
+          .order("wins", { ascending: false });
+
+        if (error) throw error;
+
+        // Map database fields to match the PlayerStats type used by the PlayerRankings component
+        const mappedData = (data || []).map((player) => ({
+          id: player.id,
+          name: player.name,
+          nickname: player.nickname,
+          emoji: player.emoji,
+          matches_played: player.matches_played,
+          wins: player.wins,
+          draws: player.draws,
+          losses: player.losses,
+          points: player.points,
+        }));
+
+        setPlayerStats(mappedData);
+      } else {
+        // For specific month, calculate stats based on filtered matches
+        // Get start and end date for the selected month
+        const [year, month] = selectedMonth.split("-").map(Number);
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0); // Last day of the month
+        endDate.setHours(23, 59, 59, 999);
+
+        // Get matches for the selected month
+        const { data: monthMatches, error } = await supabase
+          .from("matches")
+          .select(
+            `
+            *,
+            player1:player1_id(id, name, nickname, emoji),
+            player2:player2_id(id, name, nickname, emoji)
+          `
+          )
+          .gte("played_at", startDate.toISOString())
+          .lte("played_at", endDate.toISOString())
+          .order("played_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (monthMatches) {
+          // Calculate stats from these matches
+          const playerStatsMap = new Map();
+
+          // Process each match
+          monthMatches.forEach((match) => {
+            const player1Id = match.player1.id;
+            const player2Id = match.player2.id;
+            const player1Won = match.player1_score > match.player2_score;
+            const isDraw = match.player1_score === match.player2_score;
+
+            // Initialize or update player1 stats
+            const player1Stats = playerStatsMap.get(player1Id) || {
+              id: player1Id,
+              name: match.player1.name,
+              nickname: match.player1.nickname,
+              emoji: match.player1.emoji,
+              matches_played: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              points: 0,
+            };
+
+            player1Stats.matches_played += 1;
+
+            if (player1Won) {
+              player1Stats.wins += 1;
+              player1Stats.points += 3;
+            } else if (isDraw) {
+              player1Stats.draws += 1;
+              player1Stats.points += 1;
+            } else {
+              player1Stats.losses += 1;
+            }
+
+            playerStatsMap.set(player1Id, player1Stats);
+
+            // Initialize or update player2 stats
+            const player2Stats = playerStatsMap.get(player2Id) || {
+              id: player2Id,
+              name: match.player2.name,
+              nickname: match.player2.nickname,
+              emoji: match.player2.emoji,
+              matches_played: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              points: 0,
+            };
+
+            player2Stats.matches_played += 1;
+
+            if (!player1Won && !isDraw) {
+              player2Stats.wins += 1;
+              player2Stats.points += 3;
+            } else if (isDraw) {
+              player2Stats.draws += 1;
+              player2Stats.points += 1;
+            } else {
+              player2Stats.losses += 1;
+            }
+
+            playerStatsMap.set(player2Id, player2Stats);
+          });
+
+          // Convert map to array and sort by points, then wins
+          const statsArray = Array.from(playerStatsMap.values()).sort(
+            (a, b) => {
+              if (b.points !== a.points) {
+                return b.points - a.points;
+              }
+              return b.wins - a.wins;
+            }
+          );
+
+          setPlayerStats(statsArray);
+        } else {
+          setPlayerStats([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching player stats:", err);
+      setPlayerStats([]);
+    }
   }
 
   async function fetchMatches() {
@@ -156,16 +259,60 @@ export function IndividualMatches() {
         )
         .order("played_at", { ascending: false });
 
-      if (filterPlayer1 && filterPlayer1 !== "all") {
-        query = query.eq("player1_id", filterPlayer1);
+      // If only player1 filter is set (and not player2)
+      if (filterPlayer1 !== "all" && filterPlayer2 === "all") {
+        // Find matches where this player is either player1 or player2
+        query = query.or(
+          `player1_id.eq.${filterPlayer1},player2_id.eq.${filterPlayer1}`
+        );
       }
-      if (filterPlayer2 && filterPlayer2 !== "all") {
-        query = query.eq("player2_id", filterPlayer2);
+      // If only player2 filter is set (and not player1)
+      else if (filterPlayer2 !== "all" && filterPlayer1 === "all") {
+        // Find matches where this player is either player1 or player2
+        query = query.or(
+          `player1_id.eq.${filterPlayer2},player2_id.eq.${filterPlayer2}`
+        );
+      }
+      // If both filters are set
+      else if (filterPlayer1 !== "all" && filterPlayer2 !== "all") {
+        // Find matches where both players participated (in any position)
+        query = query.or(
+          `and(player1_id.eq.${filterPlayer1},player2_id.eq.${filterPlayer2}),and(player1_id.eq.${filterPlayer2},player2_id.eq.${filterPlayer1})`
+        );
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      if (data) setMatches(data);
+      if (data) {
+        setMatches(data);
+
+        // Extract and set available months from match data
+        const monthsMap = new Map<string, string>();
+        monthsMap.set("all", t("common.all"));
+
+        data.forEach((match) => {
+          const date = new Date(match.played_at);
+          const monthValue = `${date.getFullYear()}-${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}`;
+          const monthLabel = date.toLocaleString("default", {
+            month: "long",
+            year: "numeric",
+          });
+          monthsMap.set(monthValue, monthLabel);
+        });
+
+        // Convert map to array and sort by date (most recent first)
+        const monthsArray = Array.from(monthsMap.entries())
+          .map(([value, label]) => ({ value, label }))
+          .sort((a, b) => {
+            if (a.value === "all") return -1;
+            if (b.value === "all") return 1;
+            return b.value.localeCompare(a.value);
+          });
+
+        setAvailableMonths(monthsArray);
+      }
     } catch (err) {
       console.error("Error fetching matches:", err);
     }
@@ -280,22 +427,6 @@ export function IndividualMatches() {
     }
   }
 
-  async function deletePlayer(playerId: string) {
-    try {
-      const { error } = await supabase
-        .from("players")
-        .delete()
-        .eq("id", playerId);
-
-      if (error) throw error;
-      await Promise.all([fetchPlayers(), fetchPlayerStats(), fetchMatches()]);
-    } catch (err) {
-      setError(
-        t("common.error") + ": " + t("individual.confirm_delete_player")
-      );
-    }
-  }
-
   function handleEditMatch(match: Match) {
     setEditingMatch(match);
     setSelectedPlayer1(match.player1_id);
@@ -306,14 +437,6 @@ export function IndividualMatches() {
     date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
     setMatchDate(date.toISOString().slice(0, 16));
     setIsMatchDialogOpen(true);
-  }
-
-  function handleEditPlayer(player: Player) {
-    setEditingPlayer(player);
-    setNewPlayerName(player.name);
-    setNewPlayerNickname(player.nickname || "");
-    setNewPlayerEmoji(player.emoji);
-    setIsPlayerDialogOpen(true);
   }
 
   if (error) {
@@ -385,10 +508,27 @@ export function IndividualMatches() {
             isEditing={!!editingPlayer}
           />
 
-          <PlayerRankings playerStats={playerStats} />
+          <PlayerRankings
+            playerStats={playerStats}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            availableMonths={availableMonths}
+          />
 
           <MatchHistory
-            matches={matches}
+            matches={
+              selectedMonth === "all"
+                ? matches
+                : matches.filter((match) => {
+                    const date = new Date(match.played_at);
+                    const matchMonth = `${date.getFullYear()}-${(
+                      date.getMonth() + 1
+                    )
+                      .toString()
+                      .padStart(2, "0")}`;
+                    return matchMonth === selectedMonth;
+                  })
+            }
             players={players}
             filterPlayer1={filterPlayer1}
             filterPlayer2={filterPlayer2}
@@ -396,6 +536,9 @@ export function IndividualMatches() {
             setFilterPlayer2={setFilterPlayer2}
             onEditMatch={handleEditMatch}
             onDeleteMatch={deleteMatch}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            availableMonths={availableMonths}
           />
         </div>
       </main>

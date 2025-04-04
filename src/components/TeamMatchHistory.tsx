@@ -34,6 +34,9 @@ type TeamMatchHistoryProps = {
   setFilterTeam2: (value: string) => void;
   onEditMatch: (match: TeamMatch) => void;
   onDeleteMatch: (matchId: string) => void;
+  selectedMonth: string;
+  setSelectedMonth: (month: string) => void;
+  availableMonths: Array<{ value: string; label: string }>;
 };
 
 export function TeamMatchHistory({
@@ -45,6 +48,9 @@ export function TeamMatchHistory({
   setFilterTeam2,
   onEditMatch,
   onDeleteMatch,
+  selectedMonth,
+  setSelectedMonth,
+  availableMonths,
 }: TeamMatchHistoryProps) {
   const { t, language } = useLocalization();
 
@@ -53,9 +59,38 @@ export function TeamMatchHistory({
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">{t("team.matches")}</h2>
         <div className="flex flex-col sm:flex-row gap-4 mt-4 md:mt-0 w-full md:w-auto">
+          <div className="flex flex-col">
+            <label
+              htmlFor="team-match-month-filter"
+              className="mb-1 text-sm text-gray-600"
+            >
+              {t("common.month_filter_label")}
+            </label>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger
+                id="team-match-month-filter"
+                className="w-full text-sm"
+              >
+                <SelectValue placeholder={t("common.filter_by_month")} />
+              </SelectTrigger>
+              <SelectContent>
+                {availableMonths.map((month) => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="relative">
+            <label
+              htmlFor="team1-filter"
+              className="mb-1 text-sm text-gray-600"
+            >
+              {t("team.team1_filter_label")}
+            </label>
             <Select value={filterTeam1} onValueChange={setFilterTeam1}>
-              <SelectTrigger className="w-full text-sm">
+              <SelectTrigger id="team1-filter" className="w-full text-sm">
                 <SelectValue placeholder={t("team.filter_team1")} />
               </SelectTrigger>
               <SelectContent>
@@ -69,8 +104,14 @@ export function TeamMatchHistory({
             </Select>
           </div>
           <div className="relative">
+            <label
+              htmlFor="team2-filter"
+              className="mb-1 text-sm text-gray-600"
+            >
+              {t("team.team2_filter_label")}
+            </label>
             <Select value={filterTeam2} onValueChange={setFilterTeam2}>
-              <SelectTrigger className="w-full text-sm">
+              <SelectTrigger id="team2-filter" className="w-full text-sm">
                 <SelectValue placeholder={t("team.filter_team2")} />
               </SelectTrigger>
               <SelectContent>

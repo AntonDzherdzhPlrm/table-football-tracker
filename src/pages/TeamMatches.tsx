@@ -50,6 +50,10 @@ export function TeamMatches() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [teamMatches, setTeamMatches] = useState<TeamMatch[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState("all");
+  const [availableMonths, setAvailableMonths] = useState<
+    Array<{ value: string; label: string }>
+  >([{ value: "all", label: t("common.all") }]);
 
   const [teamName, setTeamName] = useState("");
   const [teamEmoji, setTeamEmoji] = useState("👥");
@@ -72,16 +76,14 @@ export function TeamMatches() {
   const [filterTeam2, setFilterTeam2] = useState("all");
 
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const initializeData = async () => {
       try {
-        await Promise.all([
-          fetchPlayers(),
-          fetchTeams(),
-          fetchTeamMatches(),
-          fetchTeamStats(),
-        ]);
+        setIsLoading(true);
+        await Promise.all([fetchPlayers(), fetchTeams(), fetchTeamMatches()]);
+        setIsLoading(false);
       } catch (err) {
         setError(t("common.error") + ": " + t("common.loading"));
       }
@@ -89,6 +91,18 @@ export function TeamMatches() {
 
     initializeData();
   }, [t]);
+
+  // Fetch team stats when selected month changes
+  useEffect(() => {
+    if (isLoading) return;
+    fetchTeamStats();
+  }, [selectedMonth, isLoading]);
+
+  // Fetch team matches when filter changes
+  useEffect(() => {
+    if (isLoading) return;
+    fetchTeamMatches();
+  }, [filterTeam1, filterTeam2, isLoading]);
 
   async function fetchPlayers() {
     const { data, error } = await supabase.from("players").select("*");
@@ -103,9 +117,122 @@ export function TeamMatches() {
   }
 
   async function fetchTeamStats() {
-    const { data, error } = await supabase.from("team_stats").select("*");
-    if (error) throw error;
-    if (data) setTeamStats(data);
+    try {
+      if (selectedMonth === "all") {
+        // When "all" is selected, fetch from the team_stats view that has all-time stats
+        const { data, error } = await supabase
+          .from("team_stats")
+          .select("*")
+          .order("points", { ascending: false })
+          .order("wins", { ascending: false });
+
+        if (error) throw error;
+        if (data) setTeamStats(data);
+      } else {
+        // For specific month, calculate stats based on filtered matches
+        // Get start and end date for the selected month
+        const [year, month] = selectedMonth.split("-").map(Number);
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0); // Last day of the month
+        endDate.setHours(23, 59, 59, 999);
+
+        // Get matches for the selected month
+        const { data: monthMatches, error } = await supabase
+          .from("team_matches")
+          .select(
+            `
+            *,
+            team1:team1_id(id, name, emoji),
+            team2:team2_id(id, name, emoji)
+          `
+          )
+          .gte("played_at", startDate.toISOString())
+          .lte("played_at", endDate.toISOString())
+          .order("played_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (monthMatches) {
+          // Calculate stats from these matches
+          const teamStatsMap = new Map();
+
+          // Process each match
+          monthMatches.forEach((match) => {
+            const team1Id = match.team1.id;
+            const team2Id = match.team2.id;
+            const team1Won = match.team1_score > match.team2_score;
+            const isDraw = match.team1_score === match.team2_score;
+
+            // Initialize or update team1 stats
+            const team1Stats = teamStatsMap.get(team1Id) || {
+              id: team1Id,
+              name: match.team1.name,
+              emoji: match.team1.emoji,
+              matches_played: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              points: 0,
+            };
+
+            team1Stats.matches_played += 1;
+
+            if (team1Won) {
+              team1Stats.wins += 1;
+              team1Stats.points += 3;
+            } else if (isDraw) {
+              team1Stats.draws += 1;
+              team1Stats.points += 1;
+            } else {
+              team1Stats.losses += 1;
+            }
+
+            teamStatsMap.set(team1Id, team1Stats);
+
+            // Initialize or update team2 stats
+            const team2Stats = teamStatsMap.get(team2Id) || {
+              id: team2Id,
+              name: match.team2.name,
+              emoji: match.team2.emoji,
+              matches_played: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              points: 0,
+            };
+
+            team2Stats.matches_played += 1;
+
+            if (!team1Won && !isDraw) {
+              team2Stats.wins += 1;
+              team2Stats.points += 3;
+            } else if (isDraw) {
+              team2Stats.draws += 1;
+              team2Stats.points += 1;
+            } else {
+              team2Stats.losses += 1;
+            }
+
+            teamStatsMap.set(team2Id, team2Stats);
+          });
+
+          // Convert map to array and sort by points, then wins
+          const statsArray = Array.from(teamStatsMap.values()).sort((a, b) => {
+            if (b.points !== a.points) {
+              return b.points - a.points;
+            }
+            return b.wins - a.wins;
+          });
+
+          setTeamStats(statsArray);
+        } else {
+          setTeamStats([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching team stats:", err);
+      setTeamStats([]);
+    }
   }
 
   async function fetchTeamMatches() {
@@ -120,16 +247,56 @@ export function TeamMatches() {
       )
       .order("played_at", { ascending: false });
 
-    if (filterTeam1 && filterTeam1 !== "all") {
-      query = query.eq("team1_id", filterTeam1);
+    // If only team1 filter is set (and not team2)
+    if (filterTeam1 !== "all" && filterTeam2 === "all") {
+      // Find matches where this team is either team1 or team2
+      query = query.or(`team1_id.eq.${filterTeam1},team2_id.eq.${filterTeam1}`);
     }
-    if (filterTeam2 && filterTeam2 !== "all") {
-      query = query.eq("team2_id", filterTeam2);
+    // If only team2 filter is set (and not team1)
+    else if (filterTeam2 !== "all" && filterTeam1 === "all") {
+      // Find matches where this team is either team1 or team2
+      query = query.or(`team1_id.eq.${filterTeam2},team2_id.eq.${filterTeam2}`);
+    }
+    // If both filters are set
+    else if (filterTeam1 !== "all" && filterTeam2 !== "all") {
+      // Find matches where both teams participated (in any position)
+      query = query.or(
+        `and(team1_id.eq.${filterTeam1},team2_id.eq.${filterTeam2}),and(team1_id.eq.${filterTeam2},team2_id.eq.${filterTeam1})`
+      );
     }
 
     const { data, error } = await query;
     if (error) throw error;
-    if (data) setTeamMatches(data);
+    if (data) {
+      setTeamMatches(data);
+
+      // Extract and set available months from match data
+      const monthsMap = new Map<string, string>();
+      monthsMap.set("all", t("common.all"));
+
+      data.forEach((match) => {
+        const date = new Date(match.played_at);
+        const monthValue = `${date.getFullYear()}-${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}`;
+        const monthLabel = date.toLocaleString("default", {
+          month: "long",
+          year: "numeric",
+        });
+        monthsMap.set(monthValue, monthLabel);
+      });
+
+      // Convert map to array and sort by date (most recent first)
+      const monthsArray = Array.from(monthsMap.entries())
+        .map(([value, label]) => ({ value, label }))
+        .sort((a, b) => {
+          if (a.value === "all") return -1;
+          if (b.value === "all") return 1;
+          return b.value.localeCompare(a.value);
+        });
+
+      setAvailableMonths(monthsArray);
+    }
   }
 
   async function addTeam(e: React.FormEvent) {
@@ -316,10 +483,6 @@ export function TeamMatches() {
     setIsMatchDialogOpen(true);
   }
 
-  useEffect(() => {
-    fetchTeamMatches();
-  }, [filterTeam1, filterTeam2]);
-
   if (error) {
     return (
       <div className="min-h-screen bg-team-football p-8 flex items-center justify-center">
@@ -393,10 +556,28 @@ export function TeamMatches() {
             isEditing={!!editingTeam}
           />
 
-          <TeamRankings teamStats={teamStats} onDeleteTeam={deleteTeam} />
+          <TeamRankings
+            teamStats={teamStats}
+            onDeleteTeam={deleteTeam}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            availableMonths={availableMonths}
+          />
 
           <TeamMatchHistory
-            matches={teamMatches}
+            matches={
+              selectedMonth === "all"
+                ? teamMatches
+                : teamMatches.filter((match) => {
+                    const date = new Date(match.played_at);
+                    const matchMonth = `${date.getFullYear()}-${(
+                      date.getMonth() + 1
+                    )
+                      .toString()
+                      .padStart(2, "0")}`;
+                    return matchMonth === selectedMonth;
+                  })
+            }
             teams={teams}
             filterTeam1={filterTeam1}
             filterTeam2={filterTeam2}
@@ -404,6 +585,9 @@ export function TeamMatches() {
             setFilterTeam2={setFilterTeam2}
             onEditMatch={handleEditTeamMatch}
             onDeleteMatch={deleteTeamMatch}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            availableMonths={availableMonths}
           />
         </div>
       </main>

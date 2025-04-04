@@ -2,6 +2,13 @@ import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useLocalization } from "../lib/LocalizationContext";
 import { ConfirmDialog } from "./ConfirmDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TeamStats = {
   id: string;
@@ -17,9 +24,18 @@ type TeamStats = {
 type TeamRankingsProps = {
   teamStats: TeamStats[];
   onDeleteTeam: (teamId: string) => void;
+  selectedMonth: string;
+  setSelectedMonth: (month: string) => void;
+  availableMonths: Array<{ value: string; label: string }>;
 };
 
-export function TeamRankings({ teamStats, onDeleteTeam }: TeamRankingsProps) {
+export function TeamRankings({
+  teamStats,
+  onDeleteTeam,
+  selectedMonth,
+  setSelectedMonth,
+  availableMonths,
+}: TeamRankingsProps) {
   const { t } = useLocalization();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<TeamStats | null>(null);
@@ -37,7 +53,36 @@ export function TeamRankings({ teamStats, onDeleteTeam }: TeamRankingsProps) {
 
   return (
     <div className="bg-white/95 backdrop-blur p-6 rounded-lg shadow-md border-t-4 border-orange-500">
-      <h2 className="text-xl font-semibold mb-4">{t("team.rankings")}</h2>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">{t("team.rankings")}</h2>
+        {availableMonths.length > 1 && (
+          <div className="mt-4 md:mt-0 w-full md:w-auto">
+            <div className="flex flex-col">
+              <label
+                htmlFor="team-month-filter"
+                className="mb-1 text-sm text-gray-600"
+              >
+                {t("common.month_filter_label")}
+              </label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger
+                  id="team-month-filter"
+                  className="w-full md:w-48 text-sm"
+                >
+                  <SelectValue placeholder={t("common.filter_by_month")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableMonths.map((month) => (
+                    <SelectItem key={month.value} value={month.value}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
