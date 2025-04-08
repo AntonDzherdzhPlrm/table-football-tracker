@@ -29,6 +29,19 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    message: "Football Tracker API is running",
+    endpoints: {
+      teams: "/api/teams",
+      players: "/api/players",
+      matches: "/api/matches",
+      teamMatches: "/api/team-matches",
+    },
+  });
+});
+
 // Routes
 
 // TEAM ROUTES
@@ -285,7 +298,8 @@ app.get("/api/team-matches/active-months", async (req, res) => {
       return b.month - a.month;
     });
 
-    res.status(200).json(formattedMonths);
+    // Add "All" option at the beginning
+    return [{ value: "all", label: "All" }, ...formattedMonths];
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -519,7 +533,8 @@ app.get("/api/matches/active-months", async (req, res) => {
       return b.month - a.month;
     });
 
-    res.status(200).json(formattedMonths);
+    // Add "All" option at the beginning
+    return [{ value: "all", label: "All" }, ...formattedMonths];
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -683,7 +698,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });
 
-// Start server
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
