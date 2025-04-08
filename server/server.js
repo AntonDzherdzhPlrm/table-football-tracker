@@ -27,7 +27,11 @@ const PORT = process.env.PORT || 3001;
 
 // Configure CORS with specific options
 const corsOptions = {
-  origin: "*", // Allow all origins
+  origin: [
+    "https://table-football-tracker.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -47,7 +51,17 @@ app.use(express.json());
 
 // CORS headers middleware - apply to all routes
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  const allowedOrigins = [
+    "https://table-football-tracker.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
+  ];
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
