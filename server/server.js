@@ -79,6 +79,9 @@ app.get("/", (req, res) => {
   });
 });
 
+// Handle OPTIONS preflight requests for all routes
+app.options("*", cors(corsOptions));
+
 // Routes
 
 // TEAM ROUTES
