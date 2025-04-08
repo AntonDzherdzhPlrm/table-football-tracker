@@ -12,7 +12,9 @@ import {
 const BASE_URL =
   import.meta.env.VITE_API_URL ||
   "https://table-football-tracker-server.vercel.app";
-const USE_RELATIVE_PATH = import.meta.env.VITE_USE_RELATIVE_PATH === "true";
+const USE_RELATIVE_PATH =
+  import.meta.env.MODE === "production" ||
+  import.meta.env.VITE_USE_RELATIVE_PATH === "true";
 
 // Generic fetch function with error handling
 async function fetchWithError<T>(
@@ -38,6 +40,7 @@ async function fetchWithError<T>(
       },
     });
 
+    // Log detailed error information
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API error (${response.status}): ${errorText}`);
