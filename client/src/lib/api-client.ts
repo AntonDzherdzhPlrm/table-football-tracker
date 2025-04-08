@@ -11,7 +11,7 @@ import {
 // Configuration for API base URL
 const BASE_URL =
   import.meta.env.VITE_API_URL ||
-  "https://table-football-tracker-server-34vxg95zx.vercel.app";
+  "https://table-football-tracker-server.vercel.app";
 const USE_RELATIVE_PATH = import.meta.env.VITE_USE_RELATIVE_PATH === "true";
 
 // Generic fetch function with error handling
