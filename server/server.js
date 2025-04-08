@@ -46,6 +46,8 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
+  // Add Vary header to prevent caching issues
+  res.header("Vary", "Origin");
 
   // Handle preflight requests
   if (req.method === "OPTIONS") {
