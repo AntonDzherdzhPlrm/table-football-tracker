@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocalization } from "@/lib/LocalizationContext";
 import { API } from "@/lib/api-client";
-import { Player, Team } from "@/lib/types";
+import { Player, ExtendedTeam } from "@/lib/types";
 import { PlayerDialog } from "@/components/PlayerDialog";
 import { PlayerManagement as PlayerManagementComponent } from "@/components/PlayerManagement";
 import { TeamManagement } from "@/components/TeamManagement";
@@ -11,12 +11,6 @@ import { useDialogContext } from "@/lib/DialogContext";
 // Use local extended types to include the extended properties needed in this component
 type ExtendedPlayer = Player & {
   matches_played?: number;
-};
-
-type ExtendedTeam = Team & {
-  matches_played?: number;
-  player1?: ExtendedPlayer;
-  player2?: ExtendedPlayer;
 };
 
 export function PlayerManagementPage() {
@@ -105,28 +99,18 @@ export function PlayerManagementPage() {
 
   async function fetchTeams() {
     try {
-      // First get all teams
-      const teamData = await API.teams.getAll();
-
-      // Get current players
-      const playerData = await API.players.getAll();
-
-      // Match players to teams
-      const teamsWithPlayers = teamData.map((team) => {
-        const player1 = playerData?.find((p) => p.id === team.player1_id);
-        const player2 = playerData?.find((p) => p.id === team.player2_id);
-
-        return {
-          ...team,
-          player1,
-          player2,
-        };
-      });
-
+      setIsLoading(true);
+      const response = await API.teamMatches.getConsolidated();
+      const teamsWithPlayers = response.teams.map((team) => ({
+        ...team,
+        player1_id: team.player1_id || "",
+        player2_id: team.player2_id || "",
+      })) as ExtendedTeam[];
       setTeams(teamsWithPlayers);
     } catch (error) {
       console.error("Error fetching teams:", error);
-      setError(t("common.error") + ": " + t("common.loading"));
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -258,8 +242,8 @@ export function PlayerManagementPage() {
     setEditingTeam(team);
     setNewTeamName(team.name);
     setNewTeamEmoji(team.emoji);
-    setSelectedPlayer1(team.player1_id);
-    setSelectedPlayer2(team.player2_id);
+    setSelectedPlayer1(team.player1_id || "");
+    setSelectedPlayer2(team.player2_id || "");
     setIsTeamDialogOpen(true);
   }
 

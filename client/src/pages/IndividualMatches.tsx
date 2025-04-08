@@ -45,7 +45,8 @@ export function IndividualMatches() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const [config, setConfig] = useState<ConfigData | null>(null);
+  const [config] = useState<ConfigData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Initialize filter states from URL query parameters
   const queryParams = new URLSearchParams(location.search);
@@ -59,7 +60,6 @@ export function IndividualMatches() {
     queryParams.get("month") || "all"
   );
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Function to update URL when filters change
   const updateUrlParams = (player1: string, player2: string, month: string) => {
@@ -93,33 +93,31 @@ export function IndividualMatches() {
 
   // Initial fetch of data
   useEffect(() => {
-    const fetchConfig = async () => {
-      setIsLoading(true);
-
+    const initData = async () => {
+      setLoading(true);
       try {
-        // Use the config endpoint to get all data in one call
-        const configData = (await API.matches.getConfig()) as ConfigData;
+        // Fetch all data using consolidated endpoint
+        const data = await API.matches.getConsolidated();
 
-        setConfig(configData);
-        setPlayers(configData.players);
-        setPlayerStats(configData.playerStats);
-        setAllMatches(configData.matches);
-        setAvailableMonths(configData.months);
-
-        setIsLoading(false);
+        // Update state with retrieved data
+        setPlayers(data.players);
+        setPlayerStats(data.playerStats);
+        setAllMatches(data.matches);
+        setAvailableMonths(data.activeMonths);
       } catch (error) {
         console.error("Error loading data:", error);
         setError(t("common.error") + ": " + t("common.loading"));
-        setIsLoading(false);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchConfig();
+    initData();
   }, [t]);
 
   // Apply filters when filter criteria or data changes
   useEffect(() => {
-    if (isLoading || !config) return;
+    if (loading) return;
 
     // Filter matches based on selected players
     let matches = [...allMatches];
@@ -178,15 +176,20 @@ export function IndividualMatches() {
         setPlayerStats([]);
       }
     } else {
-      // Use the overall stats from config
-      setPlayerStats(config.playerStats);
+      // Use the overall stats from the consolidated data
+      if (allMatches.length > 0) {
+        const overallStats = calculatePlayerStats(allMatches);
+        setPlayerStats(overallStats);
+      } else {
+        setPlayerStats([]);
+      }
     }
   }, [
     filterPlayer1,
     filterPlayer2,
     selectedMonth,
     config,
-    isLoading,
+    loading,
     allMatches,
   ]);
 
@@ -211,9 +214,24 @@ export function IndividualMatches() {
     }
   }, [location.search]);
 
-  // Helper function to calculate player stats from matches
-  const calculatePlayerStats = (matches: Match[]) => {
+  // Calculate player stats based on matches for a particular time period
+  const calculatePlayerStats = (matches: Match[]): PlayerStats[] => {
     const playerStatsMap = new Map();
+
+    // First initialize map with all players (even those without matches)
+    players.forEach((player) => {
+      playerStatsMap.set(player.id, {
+        id: player.id,
+        name: player.name,
+        nickname: player.nickname,
+        emoji: player.emoji,
+        matches_played: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        points: 0,
+      });
+    });
 
     // Process each match
     matches.forEach((match) => {
@@ -228,59 +246,37 @@ export function IndividualMatches() {
       const player1Won = match.player1_score > match.player2_score;
       const isDraw = match.player1_score === match.player2_score;
 
-      // Initialize or update player1 stats
-      const player1Stats = playerStatsMap.get(player1Id) || {
-        id: player1Id,
-        name: player1.name,
-        nickname: player1.nickname,
-        emoji: player1.emoji,
-        matches_played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        points: 0,
-      };
+      // Update player1 stats
+      const player1Stats = playerStatsMap.get(player1Id);
+      if (player1Stats) {
+        player1Stats.matches_played += 1;
 
-      player1Stats.matches_played += 1;
-
-      if (player1Won) {
-        player1Stats.wins += 1;
-        player1Stats.points += 3;
-      } else if (isDraw) {
-        player1Stats.draws += 1;
-        player1Stats.points += 1;
-      } else {
-        player1Stats.losses += 1;
+        if (player1Won) {
+          player1Stats.wins += 1;
+          player1Stats.points += 3;
+        } else if (isDraw) {
+          player1Stats.draws += 1;
+          player1Stats.points += 1;
+        } else {
+          player1Stats.losses += 1;
+        }
       }
 
-      playerStatsMap.set(player1Id, player1Stats);
+      // Update player2 stats
+      const player2Stats = playerStatsMap.get(player2Id);
+      if (player2Stats) {
+        player2Stats.matches_played += 1;
 
-      // Initialize or update player2 stats
-      const player2Stats = playerStatsMap.get(player2Id) || {
-        id: player2Id,
-        name: player2.name,
-        nickname: player2.nickname,
-        emoji: player2.emoji,
-        matches_played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        points: 0,
-      };
-
-      player2Stats.matches_played += 1;
-
-      if (!player1Won && !isDraw) {
-        player2Stats.wins += 1;
-        player2Stats.points += 3;
-      } else if (isDraw) {
-        player2Stats.draws += 1;
-        player2Stats.points += 1;
-      } else {
-        player2Stats.losses += 1;
+        if (!player1Won && !isDraw) {
+          player2Stats.wins += 1;
+          player2Stats.points += 3;
+        } else if (isDraw) {
+          player2Stats.draws += 1;
+          player2Stats.points += 1;
+        } else {
+          player2Stats.losses += 1;
+        }
       }
-
-      playerStatsMap.set(player2Id, player2Stats);
     });
 
     // Convert map to array and sort by points, then wins
@@ -292,76 +288,65 @@ export function IndividualMatches() {
     });
   };
 
-  // Single function to refresh all data
-  const refreshData = async () => {
-    setIsLoading(true);
-    try {
-      const configData = (await API.matches.getConfig()) as ConfigData;
-
-      setConfig(configData);
-      setPlayers(configData.players);
-      setPlayerStats(configData.playerStats);
-      setAllMatches(configData.matches);
-      setAvailableMonths(configData.months);
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-      setError(t("common.error") + ": " + t("common.loading"));
-    }
-    setIsLoading(false);
-  };
-
-  async function addPlayer(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newPlayerName.trim()) return;
-
+  // Function to handle adding a new player
+  const addPlayer = async (event: React.FormEvent) => {
+    event.preventDefault();
     try {
       await API.players.create({
-        name: newPlayerName.trim(),
-        nickname: newPlayerNickname.trim() || undefined,
-        emoji: newPlayerEmoji || "👤",
+        name: newPlayerName,
+        nickname: newPlayerNickname,
+        emoji: newPlayerEmoji,
       });
 
+      // Reset form fields
       setNewPlayerName("");
       setNewPlayerNickname("");
       setNewPlayerEmoji("👤");
+
+      // Refresh data using consolidated endpoint
+      const data = await API.matches.getConsolidated();
+      setPlayers(data.players);
+      setPlayerStats(data.playerStats);
+      setAllMatches(data.matches);
+      setAvailableMonths(data.activeMonths);
+
       setIsPlayerDialogOpen(false);
-
-      // Refresh all data
-      await refreshData();
-    } catch (err) {
-      setError(t("common.error") + ": " + t("individual.add_player"));
+    } catch (error) {
+      console.error("Error adding player:", error);
+      setError(t("common.error") + ": " + t("players.addFailed"));
     }
-  }
+  };
 
-  async function updatePlayer(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editingPlayer || !newPlayerName.trim()) return;
+  // Function to handle updating a player
+  const updatePlayer = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingPlayer) return;
 
     try {
       await API.players.update(editingPlayer.id, {
-        name: newPlayerName.trim(),
-        nickname: newPlayerNickname.trim() || undefined,
-        emoji: newPlayerEmoji || "👤",
+        name: newPlayerName,
+        nickname: newPlayerNickname,
+        emoji: newPlayerEmoji,
       });
 
-      setNewPlayerName("");
-      setNewPlayerNickname("");
-      setNewPlayerEmoji("👤");
+      // Refresh data using consolidated endpoint
+      const data = await API.matches.getConsolidated();
+      setPlayers(data.players);
+      setPlayerStats(data.playerStats);
+      setAllMatches(data.matches);
+      setAvailableMonths(data.activeMonths);
+
       setEditingPlayer(null);
       setIsPlayerDialogOpen(false);
-
-      // Refresh all data
-      await refreshData();
-    } catch (err) {
-      setError(t("common.error") + ": " + t("individual.edit_player"));
+    } catch (error) {
+      console.error("Error updating player:", error);
+      setError(t("common.error") + ": " + t("players.updateFailed"));
     }
-  }
+  };
 
-  async function addMatch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedPlayer1 || !selectedPlayer2 || !player1Score || !player2Score)
-      return;
-
+  // Function to handle adding a new match
+  const addMatch = async (event: React.FormEvent) => {
+    event.preventDefault();
     try {
       const matchData = {
         player1_id: selectedPlayer1,
@@ -372,41 +357,50 @@ export function IndividualMatches() {
       };
 
       if (editingMatch) {
-        await API.individualMatches.update(editingMatch.id, matchData);
+        await API.matches.update(editingMatch.id, matchData);
       } else {
-        await API.individualMatches.create(matchData);
+        await API.matches.create(matchData);
       }
 
+      // Reset form fields
       setSelectedPlayer1("");
       setSelectedPlayer2("");
       setPlayer1Score("");
       setPlayer2Score("");
       setEditingMatch(null);
+
+      // Refresh data using consolidated endpoint
+      const data = await API.matches.getConsolidated();
+      setPlayers(data.players);
+      setPlayerStats(data.playerStats);
+      setAllMatches(data.matches);
+      setAvailableMonths(data.activeMonths);
+
       setIsMatchDialogOpen(false);
-
-      // Refresh all data
-      await refreshData();
-    } catch (err) {
-      setError(
-        t("common.error") +
-          ": " +
-          (editingMatch
-            ? t("individual.edit_match")
-            : t("individual.add_match"))
-      );
+    } catch (error) {
+      console.error("Error adding match:", error);
+      setError(t("common.error") + ": " + t("matches.addFailed"));
     }
-  }
+  };
 
-  async function deleteMatch(matchId: string) {
+  // Function to handle deleting a match
+  const deleteMatch = async (matchId: string) => {
+    if (!confirm(t("matches.confirmDelete"))) return;
+
     try {
-      await API.individualMatches.delete(matchId);
+      await API.matches.delete(matchId);
 
-      // Refresh all data
-      await refreshData();
-    } catch (err) {
-      setError(t("common.error") + ": " + t("individual.confirm_delete_match"));
+      // Refresh data using consolidated endpoint
+      const data = await API.matches.getConsolidated();
+      setPlayers(data.players);
+      setPlayerStats(data.playerStats);
+      setAllMatches(data.matches);
+      setAvailableMonths(data.activeMonths);
+    } catch (error) {
+      console.error("Error deleting match:", error);
+      setError(t("common.error") + ": " + t("matches.deleteFailed"));
     }
-  }
+  };
 
   function handleEditMatch(match: Match) {
     setEditingMatch(match);

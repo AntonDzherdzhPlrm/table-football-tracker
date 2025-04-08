@@ -81,131 +81,101 @@ export function TeamMatches() {
   const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [editingMatch, setEditingMatch] = useState<TeamMatch | null>(null);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [filterTeam1, setFilterTeam1] = useState(
-    queryParams.get("team1") || "all"
-  );
-  const [filterTeam2, setFilterTeam2] = useState(
-    queryParams.get("team2") || "all"
-  );
 
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [config, setConfig] = useState<any>(null);
 
   // Function to update URL when filters change
-  const updateUrlParams = (team1: string, team2: string, month: string) => {
-    const params = new URLSearchParams();
+  const updateUrlParams = (params: {
+    team1?: string;
+    team2?: string;
+    month?: string;
+  }) => {
+    const searchParams = new URLSearchParams(location.search);
 
-    if (team1 !== "all") params.set("team1", team1);
-    if (team2 !== "all") params.set("team2", team2);
-    if (month !== "all") params.set("month", month);
+    if (params.team1) {
+      if (params.team1 !== "all") {
+        searchParams.set("team1", params.team1);
+      } else {
+        searchParams.delete("team1");
+      }
+    }
 
-    const newSearch = params.toString();
+    if (params.team2) {
+      if (params.team2 !== "all") {
+        searchParams.set("team2", params.team2);
+      } else {
+        searchParams.delete("team2");
+      }
+    }
+
+    if (params.month) {
+      if (params.month !== "all") {
+        searchParams.set("month", params.month);
+      } else {
+        searchParams.delete("month");
+      }
+    }
+
+    const newSearch = searchParams.toString();
     const newPath = `${location.pathname}${newSearch ? `?${newSearch}` : ""}`;
 
     navigate(newPath, { replace: true });
   };
 
-  // Custom setters that update both state and URL
-  const handleSetFilterTeam1 = (value: string) => {
-    setFilterTeam1(value);
-    updateUrlParams(value, filterTeam2, selectedMonth);
-  };
-
-  const handleSetFilterTeam2 = (value: string) => {
-    setFilterTeam2(value);
-    updateUrlParams(filterTeam1, value, selectedMonth);
-  };
-
-  const handleSetSelectedMonth = (value: string) => {
-    setSelectedMonth(value);
-    updateUrlParams(filterTeam1, filterTeam2, value);
-  };
-
-  // Fetch config data once on component mount
+  // Fetch data and apply filters
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setIsLoading(true);
-        const data = (await API.teamMatches.getConfig()) as {
-          players: Player[];
-          teams: Team[];
-          teamStats: any[];
-          teamMatches: TeamMatch[];
-          months: Array<{ value: string; label: string }>;
-        };
-        setConfig(data);
+        const consolidated = await API.teamMatches.getConsolidated();
 
-        // Set initial data
-        setPlayers(data.players);
-        setTeams(data.teams);
-        setTeamStats(data.teamStats as unknown as TeamStats[]);
-        setTeamMatches(data.teamMatches);
-        setAvailableMonths(data.months);
+        // Set state with players, teams and their stats
+        setPlayers(consolidated.players || []);
+        setTeams(consolidated.teams || []);
+        setTeamStats((consolidated.teamStats as any) || []);
+        setAvailableMonths(
+          consolidated.activeMonths || [
+            { value: "all", label: t("common.all") },
+          ]
+        );
 
-        setIsLoading(false);
-      } catch (err: any) {
-        console.error("Error fetching data:", err);
-        setError(t("common.error") + ": " + err.message);
-        setIsLoading(false);
+        // Filter matches based on selected teams and month
+        let filteredMatches = [...(consolidated.teamMatches || [])];
+
+        if (selectedTeam1 !== "all") {
+          filteredMatches = filteredMatches.filter(
+            (match) =>
+              match.team1_id === selectedTeam1 ||
+              match.team2_id === selectedTeam1
+          );
+        }
+
+        if (selectedTeam2 !== "all") {
+          filteredMatches = filteredMatches.filter(
+            (match) =>
+              match.team1_id === selectedTeam2 ||
+              match.team2_id === selectedTeam2
+          );
+        }
+
+        if (selectedMonth !== "all") {
+          filteredMatches = filteredMatches.filter((match) => {
+            const date = new Date(match.played_at);
+            const matchMonth = `${date.getFullYear()}-${(date.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}`;
+            return matchMonth === selectedMonth;
+          });
+        }
+
+        setTeamMatches(filteredMatches);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Failed to load data");
       }
     };
 
     fetchData();
-  }, [t]);
-
-  // Apply filtering when filter criteria change
-  useEffect(() => {
-    if (!config || isLoading) return;
-
-    // Apply team filters
-    let filteredMatches = [...config.teamMatches];
-
-    if (filterTeam1 !== "all") {
-      filteredMatches = filteredMatches.filter(
-        (match) =>
-          match.team1_id === filterTeam1 || match.team2_id === filterTeam1
-      );
-    }
-
-    if (filterTeam2 !== "all") {
-      filteredMatches = filteredMatches.filter(
-        (match) =>
-          match.team1_id === filterTeam2 || match.team2_id === filterTeam2
-      );
-    }
-
-    // Apply month filter
-    if (selectedMonth !== "all") {
-      filteredMatches = filteredMatches.filter((match) => {
-        const date = new Date(match.played_at);
-        const matchMonth = `${date.getFullYear()}-${(date.getMonth() + 1)
-          .toString()
-          .padStart(2, "0")}`;
-        return matchMonth === selectedMonth;
-      });
-    }
-
-    setTeamMatches(filteredMatches);
-
-    // Update team stats if month is selected
-    if (selectedMonth !== "all") {
-      // Calculate stats for the selected month
-      const monthMatches = config.teamMatches.filter((match: any) => {
-        const date = new Date(match.played_at);
-        const matchMonth = `${date.getFullYear()}-${(date.getMonth() + 1)
-          .toString()
-          .padStart(2, "0")}`;
-        return matchMonth === selectedMonth;
-      });
-
-      const calculatedStats = calculateMonthStats(monthMatches);
-      setTeamStats(calculatedStats);
-    } else {
-      // Use overall stats
-      setTeamStats(config.teamStats as unknown as TeamStats[]);
-    }
-  }, [filterTeam1, filterTeam2, selectedMonth, config, isLoading]);
+  }, [selectedTeam1, selectedTeam2, selectedMonth, t]);
 
   // Listen for URL changes and update filters accordingly
   useEffect(() => {
@@ -215,12 +185,12 @@ export function TeamMatches() {
     const monthParam = params.get("month") || "all";
 
     // Only update state if values are different to avoid infinite loops
-    if (team1Param !== filterTeam1) {
-      setFilterTeam1(team1Param);
+    if (team1Param !== selectedTeam1) {
+      setSelectedTeam1(team1Param);
     }
 
-    if (team2Param !== filterTeam2) {
-      setFilterTeam2(team2Param);
+    if (team2Param !== selectedTeam2) {
+      setSelectedTeam2(team2Param);
     }
 
     if (monthParam !== selectedMonth) {
@@ -228,108 +198,59 @@ export function TeamMatches() {
     }
   }, [location.search]);
 
-  // Function to calculate stats for a specific month
-  const calculateMonthStats = (matches: TeamMatch[]) => {
-    const teamStatsMap = new Map();
-
-    // Process each match
-    matches.forEach((match) => {
-      if (!match.team1 || !match.team2) return;
-
-      const team1Id = match.team1_id;
-      const team2Id = match.team2_id;
-      const team1Won = match.team1_score > match.team2_score;
-      const isDraw = match.team1_score === match.team2_score;
-
-      // Initialize or update team1 stats
-      const team1Stats = teamStatsMap.get(team1Id) || {
-        id: team1Id,
-        name: match.team1.name,
-        emoji: match.team1.emoji,
-        matches_played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        points: 0,
-      };
-
-      team1Stats.matches_played += 1;
-
-      if (team1Won) {
-        team1Stats.wins += 1;
-        team1Stats.points += 3;
-      } else if (isDraw) {
-        team1Stats.draws += 1;
-        team1Stats.points += 1;
-      } else {
-        team1Stats.losses += 1;
-      }
-
-      teamStatsMap.set(team1Id, team1Stats);
-
-      // Initialize or update team2 stats
-      const team2Stats = teamStatsMap.get(team2Id) || {
-        id: team2Id,
-        name: match.team2.name,
-        emoji: match.team2.emoji,
-        matches_played: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        points: 0,
-      };
-
-      team2Stats.matches_played += 1;
-
-      if (!team1Won && !isDraw) {
-        team2Stats.wins += 1;
-        team2Stats.points += 3;
-      } else if (isDraw) {
-        team2Stats.draws += 1;
-        team2Stats.points += 1;
-      } else {
-        team2Stats.losses += 1;
-      }
-
-      teamStatsMap.set(team2Id, team2Stats);
+  // Update URL when filters change
+  useEffect(() => {
+    updateUrlParams({
+      team1: selectedTeam1,
+      team2: selectedTeam2,
+      month: selectedMonth,
     });
-
-    // Convert map to array and sort by points, then wins
-    const statsArray = Array.from(teamStatsMap.values()).sort((a, b) => {
-      if (b.points !== a.points) {
-        return b.points - a.points;
-      }
-      return b.wins - a.wins;
-    });
-
-    return statsArray as unknown as TeamStats[];
-  };
+  }, [selectedTeam1, selectedTeam2, selectedMonth]);
 
   // Single function to refresh all data
   const refreshData = async () => {
     try {
-      setIsLoading(true);
-      const data = (await API.teamMatches.getConfig()) as {
-        players: Player[];
-        teams: Team[];
-        teamStats: any[];
-        teamMatches: TeamMatch[];
-        months: Array<{ value: string; label: string }>;
-      };
-      setConfig(data);
+      const consolidated = await API.teamMatches.getConsolidated();
 
       // Update state with fresh data
-      setPlayers(data.players);
-      setTeams(data.teams);
-      setTeamStats(data.teamStats as unknown as TeamStats[]);
-      setTeamMatches(data.teamMatches);
-      setAvailableMonths(data.months);
+      setPlayers(consolidated.players || []);
+      setTeams(consolidated.teams || []);
+      setTeamStats((consolidated.teamStats as any) || []);
+      setAvailableMonths(
+        consolidated.activeMonths || [{ value: "all", label: t("common.all") }]
+      );
 
-      setIsLoading(false);
-    } catch (err: any) {
-      console.error("Error refreshing data:", err);
-      setError(t("common.error") + ": " + err.message);
-      setIsLoading(false);
+      // Apply filters to matches
+      let filteredMatches = [...(consolidated.teamMatches || [])];
+
+      if (selectedTeam1 !== "all") {
+        filteredMatches = filteredMatches.filter(
+          (match) =>
+            match.team1_id === selectedTeam1 || match.team2_id === selectedTeam1
+        );
+      }
+
+      if (selectedTeam2 !== "all") {
+        filteredMatches = filteredMatches.filter(
+          (match) =>
+            match.team1_id === selectedTeam2 || match.team2_id === selectedTeam2
+        );
+      }
+
+      if (selectedMonth !== "all") {
+        filteredMatches = filteredMatches.filter((match) => {
+          const date = new Date(match.played_at);
+          const matchMonth = `${date.getFullYear()}-${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}`;
+          return matchMonth === selectedMonth;
+        });
+      }
+
+      setTeamMatches(filteredMatches);
+    } catch (error: any) {
+      console.error("Error refreshing data:", error);
+      setError(t("common.error") + ": " + error.message);
     }
   };
 
@@ -533,21 +454,21 @@ export function TeamMatches() {
             teamStats={teamStats}
             onDeleteTeam={deleteTeam}
             selectedMonth={selectedMonth}
-            setSelectedMonth={handleSetSelectedMonth}
+            setSelectedMonth={setSelectedMonth}
             availableMonths={availableMonths}
           />
 
           <TeamMatchHistory
             matches={teamMatches}
             teams={teams}
-            filterTeam1={filterTeam1}
-            filterTeam2={filterTeam2}
-            setFilterTeam1={handleSetFilterTeam1}
-            setFilterTeam2={handleSetFilterTeam2}
+            filterTeam1={selectedTeam1}
+            filterTeam2={selectedTeam2}
+            setFilterTeam1={setSelectedTeam1}
+            setFilterTeam2={setSelectedTeam2}
             onEditMatch={handleEditTeamMatch}
             onDeleteMatch={deleteTeamMatch}
             selectedMonth={selectedMonth}
-            setSelectedMonth={handleSetSelectedMonth}
+            setSelectedMonth={setSelectedMonth}
             availableMonths={availableMonths}
           />
         </div>

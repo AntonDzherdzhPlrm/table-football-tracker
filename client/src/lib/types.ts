@@ -77,3 +77,11 @@ export interface MonthOption {
   year?: number;
   month?: number;
 }
+
+export type ExtendedTeam = Team & {
+  matches_played?: number;
+  player1?: Player;
+  player2?: Player;
+  player1_id?: string;
+  player2_id?: string;
+};

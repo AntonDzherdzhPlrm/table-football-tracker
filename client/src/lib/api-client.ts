@@ -109,7 +109,22 @@ export const TeamMatchAPI = {
     });
   },
   getConfig: async () => {
-    return fetchWithError<any>(`/team-matches/config`);
+    return fetchWithError<{
+      teamMatches: TeamMatch[];
+      teams: Team[];
+      teamStats: TeamStats[];
+      players: Player[];
+      activeMonths: Array<{ value: string; label: string }>;
+    }>(`/team-matches/consolidated`);
+  },
+  getConsolidated: async () => {
+    return fetchWithError<{
+      teamMatches: TeamMatch[];
+      teams: Team[];
+      teamStats: TeamStats[];
+      players: Player[];
+      activeMonths: Array<{ value: string; label: string }>;
+    }>(`/team-matches/consolidated`);
   },
 };
 
@@ -149,7 +164,20 @@ export const MatchAPI = {
     );
   },
   getConfig: async () => {
-    return fetchWithError<any>(`/matches/config`);
+    return fetchWithError<{
+      matches: Match[];
+      players: Player[];
+      playerStats: PlayerStats[];
+      activeMonths: Array<{ value: string; label: string }>;
+    }>(`/matches/consolidated`);
+  },
+  getConsolidated: async () => {
+    return fetchWithError<{
+      matches: Match[];
+      players: Player[];
+      playerStats: PlayerStats[];
+      activeMonths: Array<{ value: string; label: string }>;
+    }>(`/matches/consolidated`);
   },
 };
 

@@ -1,29 +1,12 @@
-import { Edit2, Trash2, Plus } from "lucide-react";
 import { useState } from "react";
-import { useLocalization } from "../lib/LocalizationContext";
-import { ConfirmDialog } from "./ConfirmDialog";
-
-type Player = {
-  id: string;
-  name: string;
-  nickname?: string;
-  emoji: string;
-};
-
-type Team = {
-  id: string;
-  name: string;
-  emoji: string;
-  player1_id: string;
-  player2_id: string;
-  player1?: Player;
-  player2?: Player;
-  matches_played?: number;
-};
+import { useLocalization } from "@/lib/LocalizationContext";
+import { Edit2, Plus, Trash2 } from "lucide-react";
+import { ExtendedTeam } from "@/lib/types";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type TeamManagementProps = {
-  teams: Team[];
-  onEditTeam: (team: Team) => void;
+  teams: ExtendedTeam[];
+  onEditTeam: (team: ExtendedTeam) => void;
   onDeleteTeam: (teamId: string) => void;
   onAddTeam: () => void;
 };
@@ -36,9 +19,9 @@ export function TeamManagement({
 }: TeamManagementProps) {
   const { t } = useLocalization();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+  const [teamToDelete, setTeamToDelete] = useState<ExtendedTeam | null>(null);
 
-  const handleDeleteClick = (team: Team) => {
+  const handleDeleteClick = (team: ExtendedTeam) => {
     setTeamToDelete(team);
     setIsDeleteDialogOpen(true);
   };

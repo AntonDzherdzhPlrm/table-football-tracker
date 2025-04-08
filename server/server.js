@@ -209,10 +209,10 @@ app.get("/api/players/stats", async (req, res) => {
 // TEAM MATCH ROUTES
 
 // Add endpoint for consolidated team matches data
-app.get("/api/team-matches/config", async (req, res) => {
+app.get("/api/team-matches/consolidated", async (req, res) => {
   try {
     // Fetch all data in parallel
-    const [teamMatches, teams, players, months] = await Promise.all([
+    const [teamMatches, teams, players, activeMonths] = await Promise.all([
       supabase
         .from("team_matches")
         .select("*, team1:team1_id(*), team2:team2_id(*)")
@@ -230,12 +230,17 @@ app.get("/api/team-matches/config", async (req, res) => {
       teams: teams.data,
       teamStats: teamStats,
       players: players.data,
-      months: months,
+      activeMonths: activeMonths,
     });
   } catch (error) {
-    console.error("Error in team matches config:", error);
+    console.error("Error in team matches consolidated:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Redirect config endpoint to consolidated for backward compatibility
+app.get("/api/team-matches/config", (req, res) => {
+  res.redirect("/api/team-matches/consolidated");
 });
 
 // Get active months for team matches
@@ -442,10 +447,10 @@ app.delete("/api/team-matches/:id", async (req, res) => {
 // MATCH ROUTES
 
 // Add endpoint for consolidated individual matches data
-app.get("/api/matches/config", async (req, res) => {
+app.get("/api/matches/consolidated", async (req, res) => {
   try {
     // Fetch all data in parallel
-    const [matches, players, months] = await Promise.all([
+    const [matches, players, activeMonths] = await Promise.all([
       supabase
         .from("matches")
         .select("*, player1:player1_id(*), player2:player2_id(*)")
@@ -461,15 +466,20 @@ app.get("/api/matches/config", async (req, res) => {
       matches: matches.data,
       players: players.data,
       playerStats: playerStats,
-      months: months,
+      activeMonths: activeMonths,
     });
   } catch (error) {
-    console.error("Error in matches config:", error);
+    console.error("Error in matches consolidated:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get active months
+// Redirect config endpoint to consolidated for backward compatibility
+app.get("/api/matches/config", (req, res) => {
+  res.redirect("/api/matches/consolidated");
+});
+
+// Get active months for individual matches
 app.get("/api/matches/active-months", async (req, res) => {
   try {
     const { data, error } = await supabase.from("matches").select("played_at");
@@ -913,13 +923,3 @@ async function getActiveMatchMonths() {
   // Add "All" option at the beginning
   return [{ value: "all", label: "All" }, ...months];
 }
-
-// Add endpoint for consolidated team matches data
-app.get("/api/team-matches/consolidated", async (req, res) => {
-  res.redirect("/api/team-matches/config");
-});
-
-// Add endpoint for consolidated individual matches data
-app.get("/api/matches/consolidated", async (req, res) => {
-  res.redirect("/api/matches/config");
-});
