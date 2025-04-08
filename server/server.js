@@ -27,11 +27,7 @@ const PORT = process.env.PORT || 3001;
 
 // Configure CORS with specific options
 const corsOptions = {
-  origin: [
-    "https://table-football-tracker.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:5174",
-  ],
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -49,28 +45,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// CORS headers middleware - apply to all routes
+// CORS headers middleware - simplify to avoid conflicts
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    "https://table-football-tracker.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:5174",
-  ];
-  const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.header("Access-Control-Allow-Credentials", "false");
-  res.header("Access-Control-Max-Age", "86400");
-  // Add Vary header to prevent caching issues
-  res.header("Vary", "Origin, Access-Control-Request-Headers");
+  res.header("Access-Control-Allow-Origin", "*");
 
   // Handle preflight requests
   if (req.method === "OPTIONS") {
