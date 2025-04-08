@@ -12,7 +12,6 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { LocalizationProvider } from "./lib/LocalizationContext";
 import "./App.css";
-import { CorsTest } from "./pages/CorsTest";
 
 // Main App container with context
 function App() {
@@ -82,7 +81,6 @@ function AppContent() {
           <Route path="/rules" element={<Rules />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-use" element={<TermsOfUse />} />
-          <Route path="/cors-test" element={<CorsTest />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

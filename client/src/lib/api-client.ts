@@ -12,64 +12,41 @@ import {
 const BASE_URL =
   import.meta.env.VITE_API_URL ||
   "https://table-football-tracker-server.vercel.app";
-
-// Only use relative paths when on the real production domain
-const USE_RELATIVE_PATH =
-  window.location.hostname === "table-football-tracker.vercel.app";
+const USE_RELATIVE_PATH = import.meta.env.VITE_USE_RELATIVE_PATH === "true";
 
 // Generic fetch function with error handling
 async function fetchWithError<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  // Ensure endpoint starts with /
-  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  // Use absolute URL with BASE_URL if not using relative path
+  const url = USE_RELATIVE_PATH
+    ? `/api${endpoint}`
+    : `${BASE_URL}/api${endpoint}`;
 
-  // Construct URL based on environment
-  let url;
-  if (USE_RELATIVE_PATH) {
-    // In production Vercel deployment, use relative path
-    url = `/api${cleanEndpoint}`;
-  } else if (window.location.hostname === "localhost") {
-    // For localhost development
-    url = `${BASE_URL}${cleanEndpoint}`;
-  } else {
-    // For other environments, include /api
-    url = `${BASE_URL}/api${cleanEndpoint}`;
-  }
-
-  console.log(
-    `Fetching from URL: ${url}, hostname: ${window.location.hostname}, using relative: ${USE_RELATIVE_PATH}`
-  );
-
-  // Add debugging information to request headers
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    ...options.headers,
-  };
+  console.log(`Fetching from URL: ${url}`);
 
   try {
     const response = await fetch(url, {
       ...options,
       mode: "cors",
       credentials: "omit",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...options.headers,
+      },
     });
 
-    // Log detailed error information
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API error (${response.status}): ${errorText}`);
-      console.error(`Request URL: ${url}`);
-      throw new Error(
-        `Error ${response.status}: ${response.statusText || errorText}`
-      );
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error(`Fetch error for ${url}:`, error);
+    console.error("Fetch error:", error);
     throw error;
   }
 }
