@@ -24,25 +24,31 @@ async function fetchWithError<T>(
     ? `/api${endpoint}`
     : `${BASE_URL}/api${endpoint}`;
 
-  const response = await fetch(url, {
-    ...options,
-    credentials: "omit", // Don't send credentials for cross-origin requests
-    mode: "cors", // Explicitly set CORS mode
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...options.headers,
-    },
-  });
+  console.log(`Fetching from URL: ${url}`);
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      error.message || `Error ${response.status}: ${response.statusText}`
-    );
+  try {
+    const response = await fetch(url, {
+      ...options,
+      mode: "cors",
+      credentials: "omit",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API error (${response.status}): ${errorText}`);
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
   }
-
-  return response.json();
 }
 
 // Player API
