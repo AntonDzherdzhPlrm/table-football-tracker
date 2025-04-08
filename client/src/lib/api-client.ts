@@ -8,17 +8,29 @@ import {
   TeamMatch,
 } from "./types";
 
+// Configuration for API base URL
+const BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://table-football-tracker-server-34vxg95zx.vercel.app";
+const USE_RELATIVE_PATH = import.meta.env.VITE_USE_RELATIVE_PATH === "true";
+
 // Generic fetch function with error handling
 async function fetchWithError<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `/api${endpoint}`;
+  // Use absolute URL with BASE_URL if not using relative path
+  const url = USE_RELATIVE_PATH
+    ? `/api${endpoint}`
+    : `${BASE_URL}/api${endpoint}`;
 
   const response = await fetch(url, {
     ...options,
+    credentials: "omit", // Don't send credentials for cross-origin requests
+    mode: "cors", // Explicitly set CORS mode
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/json",
       ...options.headers,
     },
   });
