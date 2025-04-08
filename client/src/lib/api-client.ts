@@ -13,7 +13,7 @@ const BASE_URL =
   import.meta.env.VITE_API_URL ||
   "https://table-football-tracker-server.vercel.app";
 const USE_RELATIVE_PATH =
-  import.meta.env.MODE === "production" ||
+  window.location.hostname === "table-football-tracker.vercel.app" ||
   import.meta.env.VITE_USE_RELATIVE_PATH === "true";
 
 // Generic fetch function with error handling
@@ -21,35 +21,46 @@ async function fetchWithError<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // Ensure endpoint starts with /
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
   // Use absolute URL with BASE_URL if not using relative path
   const url = USE_RELATIVE_PATH
-    ? `/api${endpoint}`
-    : `${BASE_URL}/api${endpoint}`;
+    ? `/api${cleanEndpoint}`
+    : `${BASE_URL}/api${cleanEndpoint}`;
 
-  console.log(`Fetching from URL: ${url}`);
+  console.log(
+    `Fetching from URL: ${url}, hostname: ${window.location.hostname}`
+  );
+
+  // Add debugging information to request headers
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...options.headers,
+  };
 
   try {
     const response = await fetch(url, {
       ...options,
       mode: "cors",
       credentials: "omit",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        ...options.headers,
-      },
+      headers,
     });
 
     // Log detailed error information
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API error (${response.status}): ${errorText}`);
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+      console.error(`Request URL: ${url}`);
+      throw new Error(
+        `Error ${response.status}: ${response.statusText || errorText}`
+      );
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error(`Fetch error for ${url}:`, error);
     throw error;
   }
 }
