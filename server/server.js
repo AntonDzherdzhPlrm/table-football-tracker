@@ -58,6 +58,23 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// CORS headers middleware - apply to all routes
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  next();
+});
+
 // Root route
 app.get("/", (req, res) => {
   res.json({
@@ -725,6 +742,19 @@ app.delete("/api/matches/:id", async (req, res) => {
 // Health check route
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
+});
+
+// CORS test route
+app.get("/api/cors-test", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "CORS is working properly",
+    timestamp: new Date().toISOString(),
+    headers: {
+      origin: req.headers.origin,
+      "user-agent": req.headers["user-agent"],
+    },
+  });
 });
 
 // Start the server
