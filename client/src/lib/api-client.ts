@@ -12,9 +12,10 @@ import {
 const BASE_URL =
   import.meta.env.VITE_API_URL ||
   "https://table-football-tracker-server.vercel.app";
+
+// Only use relative paths when on the real production domain
 const USE_RELATIVE_PATH =
-  window.location.hostname === "table-football-tracker.vercel.app" ||
-  import.meta.env.VITE_USE_RELATIVE_PATH === "true";
+  window.location.hostname === "table-football-tracker.vercel.app";
 
 // Generic fetch function with error handling
 async function fetchWithError<T>(
@@ -24,13 +25,21 @@ async function fetchWithError<T>(
   // Ensure endpoint starts with /
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 
-  // Use absolute URL with BASE_URL if not using relative path
-  const url = USE_RELATIVE_PATH
-    ? `/api${cleanEndpoint}`
-    : `${BASE_URL}/api${cleanEndpoint}`;
+  // Construct URL based on environment
+  let url;
+  if (USE_RELATIVE_PATH) {
+    // In production Vercel deployment, use relative path
+    url = `/api${cleanEndpoint}`;
+  } else if (window.location.hostname === "localhost") {
+    // For localhost development
+    url = `${BASE_URL}${cleanEndpoint}`;
+  } else {
+    // For other environments, include /api
+    url = `${BASE_URL}/api${cleanEndpoint}`;
+  }
 
   console.log(
-    `Fetching from URL: ${url}, hostname: ${window.location.hostname}`
+    `Fetching from URL: ${url}, hostname: ${window.location.hostname}, using relative: ${USE_RELATIVE_PATH}`
   );
 
   // Add debugging information to request headers
