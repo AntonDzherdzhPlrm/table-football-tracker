@@ -29,9 +29,16 @@ const PORT = process.env.PORT || 3001;
 const corsOptions = {
   origin: "*", // Allow all origins
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+  ],
   credentials: false,
   optionsSuccessStatus: 200,
+  maxAge: 86400,
 };
 
 // Middleware
@@ -46,8 +53,10 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
+  res.header("Access-Control-Allow-Credentials", "false");
+  res.header("Access-Control-Max-Age", "86400");
   // Add Vary header to prevent caching issues
-  res.header("Vary", "Origin");
+  res.header("Vary", "Origin, Access-Control-Request-Headers");
 
   // Handle preflight requests
   if (req.method === "OPTIONS") {
