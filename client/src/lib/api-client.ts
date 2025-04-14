@@ -22,7 +22,9 @@ async function fetchWithError<T>(
   // Use absolute URL with BASE_URL if not using relative path
   const url = USE_RELATIVE_PATH
     ? `/api${endpoint}`
-    : `${BASE_URL}/api${endpoint}`;
+    : `${BASE_URL}${
+        endpoint.startsWith("/api") ? endpoint : `/api${endpoint}`
+      }`;
 
   console.log(`Fetching from URL: ${url}`);
 
