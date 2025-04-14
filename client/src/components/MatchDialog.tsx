@@ -170,7 +170,7 @@ export function MatchDialog({
           </div>
           <button
             type="submit"
-            className="w-full bg-orange-600 text-white py-2 rounded-md hover:bg-orange-500 text-sm sm:text-base"
+            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-500 text-sm sm:text-base"
           >
             {isEditing ? t("common.update") : t("common.add")}
           </button>

@@ -26,8 +26,6 @@ async function fetchWithError<T>(
         endpoint.startsWith("/api") ? endpoint : `/api${endpoint}`
       }`;
 
-  console.log(`Fetching from URL: ${url}`);
-
   try {
     const response = await fetch(url, {
       ...options,
@@ -42,8 +40,9 @@ async function fetchWithError<T>(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`API error (${response.status}): ${errorText}`);
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+      throw new Error(
+        `Error ${response.status}: ${errorText || response.statusText}`
+      );
     }
 
     return await response.json();

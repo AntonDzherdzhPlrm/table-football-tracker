@@ -20,14 +20,13 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 
 async function testConnection() {
   try {
-    const { data, error } = await supabase.from("matches").select("*").limit(1);
-
+    const { data, error } = await supabase.from("players").select("*").limit(1);
     if (error) throw error;
-
-    console.log("Successfully connected to Supabase!");
-    console.log("Sample data:", data);
+    // Test connection successful
+    process.exit(0);
   } catch (error) {
     console.error("Error connecting to Supabase:", error.message);
+    process.exit(1);
   }
 }
 

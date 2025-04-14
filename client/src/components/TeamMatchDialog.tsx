@@ -74,7 +74,7 @@ export function TeamMatchDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto border-t-4 border-orange-500">
+      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto border-t-4 border-orange-500 z-[1000]">
         <DialogHeader>
           <DialogTitle className="text-xl text-gray-800">
             {isEditing ? t("team.edit_match") : t("team.add_match")}

@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocalization } from "../lib/LocalizationContext";
 import {
   Dialog,
   DialogContent,
@@ -6,96 +7,46 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useLocalization } from "../lib/LocalizationContext";
+import { emojiCategories, allEmojis } from "../lib/utils";
+import { CategoryButtons } from "@/components/ui/category-buttons";
 
 type PlayerDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   playerName: string;
-  setPlayerName: (value: string) => void;
   playerNickname: string;
-  setPlayerNickname: (value: string) => void;
   playerEmoji: string;
+  setPlayerName: (value: string) => void;
+  setPlayerNickname: (value: string) => void;
   setPlayerEmoji: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   isEditing: boolean;
 };
 
-const commonEmojis = [
-  "👥",
-  "👤",
-  "😊",
-  "😎",
-  "🤓",
-  "🎮",
-  "⚽️",
-  "🎯",
-  "🎲",
-  "🏆",
-  "🌟",
-  "🔥",
-  "💪",
-  "🦁",
-  "🐯",
-  "🦊",
-  "🐼",
-  "🎸",
-  "🎤",
-  "🎧",
-  "🚀",
-  "🎭",
-  "🎨",
-  "🎬",
-  "🎼",
-  "💡",
-  "💥",
-  "🚴",
-  "🏋️",
-  "🏄",
-  "🏇",
-  "🧗",
-  "🏹",
-  "🛹",
-  "🥋",
-  "🏀",
-  "⚾",
-  "🏈",
-  "🥅",
-  "🥊",
-  "🎳",
-  "🎻",
-  "📚",
-  "📝",
-  "✏️",
-  "🖋️",
-  "💻",
-  "📱",
-  "🕹️",
-  "🎱",
-  "🏓",
-];
-
 export function PlayerDialog({
   isOpen,
   onOpenChange,
-  playerName,
+  playerName = "",
+  playerNickname = "",
+  playerEmoji = "👤",
   setPlayerName,
-  playerNickname,
   setPlayerNickname,
-  playerEmoji,
   setPlayerEmoji,
   onSubmit,
-  isEditing,
+  isEditing = false,
 }: PlayerDialogProps) {
   const { t } = useLocalization();
-  // Reference to the first input in the form for focus management
+  const [selectedCategory, setSelectedCategory] = useState("sports");
   const nameInputRef = useRef<HTMLInputElement>(null);
   const initialFocusRef = useRef(false);
 
-  // Focus the first input when the dialog opens
+  const displayedEmojis =
+    selectedCategory === "all"
+      ? allEmojis
+      : emojiCategories[selectedCategory as keyof typeof emojiCategories] || [];
+
   useEffect(() => {
     if (isOpen && nameInputRef.current && !initialFocusRef.current) {
-      // Short timeout to ensure the dialog is fully rendered
       const timeoutId = setTimeout(() => {
         nameInputRef.current?.focus();
         initialFocusRef.current = true;
@@ -110,59 +61,73 @@ export function PlayerDialog({
     }
   }, [isOpen]);
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(e);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto border-t-4 border-orange-500 z-[1000]">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-xl text-gray-800">
             {isEditing
               ? t("individual.edit_player")
               : t("individual.add_player")}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600">
             {isEditing
               ? t("individual.player_dialog.edit_description")
               : t("individual.player_dialog.add_description")}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
-              htmlFor="player-name"
+              htmlFor="name"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {t("individual.player_name")}
             </label>
             <input
-              id="player-name"
-              ref={nameInputRef}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              id="name"
+              ref={nameInputRef}
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
+              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="nickname"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               {t("individual.player_nickname")}
             </label>
             <input
               type="text"
-              placeholder={t("individual.player_nickname")}
-              className="w-full px-3 py-2 border rounded-md"
+              id="nickname"
               value={playerNickname}
               onChange={(e) => setPlayerNickname(e.target.value)}
+              className="w-full p-2 border rounded-md"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t("individual.player_emoji")}
-            </label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">{t("common.emoji")}</label>
+
+            {/* Category buttons */}
+            <CategoryButtons
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+            />
+
+            {/* Emoji grid */}
             <div className="grid grid-cols-8 gap-2">
-              {commonEmojis.map((emoji) => (
+              {displayedEmojis.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"

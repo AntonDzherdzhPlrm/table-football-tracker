@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useLocalization } from "@/lib/LocalizationContext";
-import { Edit2, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { ExtendedTeam } from "@/lib/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type TeamManagementProps = {
   teams: ExtendedTeam[];
-  onEditTeam: (team: ExtendedTeam) => void;
+  onEditTeam: (team: ExtendedTeam) => Promise<void>;
   onDeleteTeam: (teamId: string) => void;
   onAddTeam: () => void;
 };
@@ -32,19 +32,23 @@ export function TeamManagement({
     }
   };
 
+  const handleRowClick = (team: ExtendedTeam) => {
+    onEditTeam(team);
+  };
+
   return (
-    <div className="bg-white/95 backdrop-blur p-6 rounded-lg shadow-md border-t-4 border-orange-500">
+    <div className="bg-white/95 backdrop-blur p-6 rounded-lg shadow-md border-t-4 border-blue-500">
       <div className="overflow-x-auto">
         <table className="w-full">
           <caption className="caption-top mb-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold text-gray-700 text-left flex items-center">
-                <span className="w-1.5 h-5 bg-orange-500 rounded-sm mr-2"></span>
+                <span className="w-1.5 h-5 bg-blue-500 rounded-sm mr-2"></span>
                 {t("management.teams")}
               </h2>
               <button
                 onClick={onAddTeam}
-                className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-500 transition-colors flex items-center gap-2"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-500 transition-colors flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />
                 {t("team.add_team")}
@@ -72,7 +76,8 @@ export function TeamManagement({
             {teams.map((team, index) => (
               <tr
                 key={team.id}
-                className="border-b border-gray-100 hover:bg-gray-50"
+                className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleRowClick(team)}
               >
                 <td className="py-3 px-3 md:px-4">{index + 1}</td>
                 <td className="py-3 px-3 md:px-4">
@@ -85,16 +90,11 @@ export function TeamManagement({
                 <td className="py-3 px-3 md:px-4 hidden md:table-cell">
                   {team.player2?.name}
                 </td>
-                <td className="py-3 px-3 md:px-4">
+                <td
+                  className="py-3 px-3 md:px-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => onEditTeam(team)}
-                      className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100"
-                      aria-label={t("common.edit")}
-                      title={t("common.edit")}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
                     {(!team.matches_played || team.matches_played === 0) && (
                       <button
                         onClick={() => handleDeleteClick(team)}

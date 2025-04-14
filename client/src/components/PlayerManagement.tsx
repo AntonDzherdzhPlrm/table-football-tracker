@@ -1,4 +1,4 @@
-import { Edit2, Trash2, Plus } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { useState } from "react";
 import { useLocalization } from "../lib/LocalizationContext";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -44,6 +44,15 @@ export function PlayerManagement({
     }
   };
 
+  const handleRowClick = (player: Player) => {
+    onEditPlayer({
+      id: player.id,
+      name: player.name,
+      nickname: player.nickname,
+      emoji: player.emoji,
+    });
+  };
+
   return (
     <div className="bg-white/95 backdrop-blur p-6 rounded-lg shadow-md border-t-4 border-orange-500">
       <div className="overflow-x-auto">
@@ -81,7 +90,8 @@ export function PlayerManagement({
             {players.map((player, index) => (
               <tr
                 key={player.id}
-                className="border-b border-gray-100 hover:bg-gray-50"
+                className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleRowClick(player)}
               >
                 <td className="py-3 px-3 md:px-4">{index + 1}</td>
                 <td className="py-3 px-3 md:px-4">
@@ -91,23 +101,11 @@ export function PlayerManagement({
                 <td className="py-3 px-3 md:px-4 hidden md:table-cell">
                   {player.nickname}
                 </td>
-                <td className="py-3 px-3 md:px-4">
+                <td
+                  className="py-3 px-3 md:px-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() =>
-                        onEditPlayer({
-                          id: player.id,
-                          name: player.name,
-                          nickname: player.nickname,
-                          emoji: player.emoji,
-                        })
-                      }
-                      className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100"
-                      aria-label={t("common.edit")}
-                      title={t("common.edit")}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </button>
                     {(!player.matches_played ||
                       player.matches_played === 0) && (
                       <button

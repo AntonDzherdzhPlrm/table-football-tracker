@@ -45,31 +45,29 @@ export function PlayerManagementPage() {
 
       setIsLoading(true);
       try {
-        // Fetch players first
-        const playersData = await API.players.getAll();
-        if (isMounted) {
-          setPlayers(playersData);
-        }
+        // First get players
+        const playersResponse = await API.players.getAll();
 
-        // Then fetch teams
-        const teamsData = await API.teams.getAll();
+        // Then get teams
+        const teamsResponse = await API.teams.getAll();
 
         if (isMounted) {
-          // Match players to teams
-          const teamsWithPlayers = teamsData.map((team) => {
-            const player1 = playersData.find((p) => p.id === team.player1_id);
-            const player2 = playersData.find((p) => p.id === team.player2_id);
+          // Set players
+          setPlayers(playersResponse || []);
 
+          // Map teams with player data
+          const teamsWithPlayers = teamsResponse.map((team) => {
             return {
               ...team,
-              player1,
-              player2,
+              player1_id: team.player1_id || "",
+              player2_id: team.player2_id || "",
             };
           });
 
           setTeams(teamsWithPlayers);
         }
       } catch (err) {
+        console.error("Error in initialization:", err);
         if (isMounted) {
           setError(t("common.error") + ": " + t("common.loading"));
         }
@@ -100,12 +98,23 @@ export function PlayerManagementPage() {
   async function fetchTeams() {
     try {
       setIsLoading(true);
-      const response = await API.teamMatches.getConsolidated();
-      const teamsWithPlayers = response.teams.map((team) => ({
-        ...team,
-        player1_id: team.player1_id || "",
-        player2_id: team.player2_id || "",
-      })) as ExtendedTeam[];
+
+      // Get players
+      const playersData = await API.players.getAll();
+      setPlayers(playersData || []);
+
+      // Get teams
+      const teamsData = await API.teams.getAll();
+
+      // Map teams with proper player IDs
+      const teamsWithPlayers = teamsData.map((team) => {
+        return {
+          ...team,
+          player1_id: team.player1_id || "",
+          player2_id: team.player2_id || "",
+        };
+      }) as ExtendedTeam[];
+
       setTeams(teamsWithPlayers);
     } catch (error) {
       console.error("Error fetching teams:", error);
@@ -238,13 +247,32 @@ export function PlayerManagementPage() {
     setIsPlayerDialogOpen(true);
   }
 
-  function handleEditTeam(team: ExtendedTeam) {
-    setEditingTeam(team);
-    setNewTeamName(team.name);
-    setNewTeamEmoji(team.emoji);
-    setSelectedPlayer1(team.player1_id || "");
-    setSelectedPlayer2(team.player2_id || "");
-    setIsTeamDialogOpen(true);
+  async function handleEditTeam(team: ExtendedTeam) {
+    try {
+      // Set basic team info immediately
+      setEditingTeam(team);
+      setNewTeamName(team.name);
+      setNewTeamEmoji(team.emoji);
+
+      // Ensure we have the latest player IDs
+      const response = await API.teams.getById(team.id);
+
+      // Set the player IDs from response
+      if (response) {
+        setSelectedPlayer1(response.player1_id || "");
+        setSelectedPlayer2(response.player2_id || "");
+      } else {
+        // Fallback to original team data
+        setSelectedPlayer1(team.player1_id || "");
+        setSelectedPlayer2(team.player2_id || "");
+      }
+
+      // Finally open the dialog
+      setIsTeamDialogOpen(true);
+    } catch (error) {
+      console.error("Error loading team data for editing:", error);
+      setError(t("common.error") + ": " + t("management.edit_team_load"));
+    }
   }
 
   if (error) {

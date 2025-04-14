@@ -80,10 +80,57 @@ app.options("*", cors(corsOptions));
 // Get all teams
 app.get("/api/teams", async (req, res) => {
   try {
-    const { data, error } = await supabase.from("teams").select("*");
-    if (error) throw error;
-    res.status(200).json(data);
+    // Get basic team data
+    const { data: teamsData, error: teamsError } = await supabase
+      .from("teams")
+      .select("*");
+
+    if (teamsError) throw teamsError;
+
+    // Get all team_players relationships
+    const { data: allTeamPlayers, error: tpError } = await supabase
+      .from("team_players")
+      .select("team_id, player_id");
+
+    if (tpError) throw tpError;
+
+    // Get all players
+    const { data: allPlayers, error: playersError } = await supabase
+      .from("players")
+      .select("*");
+
+    if (playersError) throw playersError;
+
+    // Build team player mapping
+    const teamPlayersMap = {};
+    allTeamPlayers.forEach((tp) => {
+      if (!teamPlayersMap[tp.team_id]) {
+        teamPlayersMap[tp.team_id] = [];
+      }
+      teamPlayersMap[tp.team_id].push(tp.player_id);
+    });
+
+    // Enhance team data with player objects
+    const enhancedTeams = teamsData.map((team) => {
+      const playerIds = teamPlayersMap[team.id] || [];
+      const teamPlayerObjects = playerIds
+        .map((id) => allPlayers.find((p) => p.id === id))
+        .filter((p) => p); // Filter out undefined
+
+      return {
+        ...team,
+        players: teamPlayerObjects,
+        // For compatibility with existing code
+        player1_id: playerIds[0] || null,
+        player2_id: playerIds[1] || null,
+        player1: teamPlayerObjects[0] || null,
+        player2: teamPlayerObjects[1] || null,
+      };
+    });
+
+    res.status(200).json(enhancedTeams);
   } catch (error) {
+    console.error("Error in get teams:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -107,13 +154,86 @@ app.get("/api/teams/stats", async (req, res) => {
 app.get("/api/teams/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { data, error } = await supabase
+
+    // Fetch team data
+    const { data: team, error: teamError } = await supabase
       .from("teams")
       .select("*")
       .eq("id", id)
       .single();
-    if (error) throw error;
-    res.status(200).json(data);
+
+    if (teamError) throw teamError;
+
+    // Fetch player IDs for this team from the team_players junction table
+    const { data: teamPlayers, error: teamPlayersError } = await supabase
+      .from("team_players")
+      .select("player_id")
+      .eq("team_id", id);
+
+    if (teamPlayersError) throw teamPlayersError;
+
+    // Extract player IDs
+    const playerIds = teamPlayers.map((tp) => tp.player_id);
+
+    // Fetch player data for those IDs
+    let players = [];
+    if (playerIds.length > 0) {
+      const { data: playerData, error: playersError } = await supabase
+        .from("players")
+        .select("*")
+        .in("id", playerIds);
+
+      if (playersError) throw playersError;
+      players = playerData;
+    }
+
+    // Return team with players
+    res.json({
+      ...team,
+      players,
+      player1_id: playerIds[0] || null,
+      player2_id: playerIds[1] || null,
+      player1: players[0] || null,
+      player2: players[1] || null,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get team players by team ID
+app.get("/api/teams/:id/players", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get the team to find player ids
+    const { data: team, error: teamError } = await supabase
+      .from("teams")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (teamError) throw teamError;
+
+    // Get player data if player IDs exist
+    if (team.player1_id && team.player2_id) {
+      const { data: players, error: playersError } = await supabase
+        .from("players")
+        .select("*")
+        .in("id", [team.player1_id, team.player2_id]);
+
+      if (playersError) throw playersError;
+
+      res.status(200).json({
+        team,
+        players,
+      });
+    } else {
+      res.status(200).json({
+        team,
+        players: [],
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -231,6 +351,49 @@ app.get("/api/players", async (req, res) => {
     if (error) throw error;
     res.status(200).json(data);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get player by ID
+app.get("/api/players/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from("players")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: "Player not found" });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Error fetching player by ID:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update player by ID
+app.put("/api/players/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, emoji, nickname } = req.body;
+
+    const { data, error } = await supabase
+      .from("players")
+      .update({ name, emoji, nickname })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: "Player not found" });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Error updating player:", error);
     res.status(500).json({ error: error.message });
   }
 });
