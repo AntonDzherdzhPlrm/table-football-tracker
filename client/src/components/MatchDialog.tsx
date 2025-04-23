@@ -75,7 +75,7 @@ export function MatchDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white max-h-[90vh] overflow-y-auto z-[1000]">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? t("individual.edit_match") : t("individual.add_match")}
